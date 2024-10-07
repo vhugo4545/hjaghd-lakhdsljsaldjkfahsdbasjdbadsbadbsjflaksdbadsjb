@@ -727,8 +727,8 @@ async function salvarProposta() {
         const dataEntrega = document.getElementById('dataEntrega').value;
 
         // Validações básicas para garantir que os campos obrigatórios estão preenchidos
-        if (!nome || !cpfCnpj || !endereco || !telefone || !vendedor || !dataEntrega) {
-            alert("Por favor, preencha todos os campos obrigatórios.");
+        if (!nome || !telefone || !vendedor) {
+            alert("Por favor, preencha todos os campos obrigatórios: Nome, Telefone e Vendedor.");
             return;
         }
 
