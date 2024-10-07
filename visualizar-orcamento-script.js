@@ -454,7 +454,8 @@ async function filtrarProdutos() {
 
     tabelaProdutos.innerHTML = '';
 
-    if (pesquisa === '') {
+    // Iniciar a pesquisa apenas se houver pelo menos 3 caracteres
+    if (pesquisa.length < 2) {
         divTabelaProdutos.style.display = 'none';
         return;
     } else {
@@ -462,75 +463,20 @@ async function filtrarProdutos() {
     }
 
     try {
+        // Alterar a URL da rota para a correta
         const response = await fetch('https://acropoluz-one-cdc9c4e154cc.herokuapp.com/produtos/visualizar');
         if (!response.ok) {
             throw new Error('Erro ao buscar os produtos');
         }
 
         const produtos = await response.json();
-        const produtosFiltrados = produtos.filter(produto =>
-            produto.descricao.toLowerCase().includes(pesquisa) ||
-            produto.codigo.toLowerCase().includes(pesquisa)
-        );
+        const produtosFiltrados = produtos.filter(produto => {
+            const descricao = produto.descricao ? produto.descricao.toLowerCase() : '';
+            const codigo = produto.codigo ? produto.codigo.toLowerCase() : '';
+            const codigoProduto = produto.codigo_produto ? produto.codigo_produto.toString().toLowerCase() : '';
 
-        function incluirProdutosSelecionados() {
-            const ambienteSelecionado = document.getElementById('ambienteSelecionado').value;
-
-            if (ambienteSelecionado === '') {
-                alert('Por favor, selecione um ambiente para adicionar produtos.');
-                return;
-            }
-
-            let tabelaAmbiente = document.getElementById(`tabela-${ambienteSelecionado}`);
-            if (!tabelaAmbiente) {
-                criarTabelaAmbiente(ambienteSelecionado);
-                tabelaAmbiente = document.getElementById(`tabela-${ambienteSelecionado}`);
-            }
-
-            const checkboxes = document.querySelectorAll('.checkbox-selecionar-produto:checked');
-            if (checkboxes.length === 0) {
-                alert('Nenhum produto selecionado.');
-                return;
-            }
-
-            checkboxes.forEach(checkbox => {
-                const row = checkbox.closest('tr');
-                const nomeProduto = row.querySelector('.produto-nome').textContent;
-                const codigoProduto = row.querySelector('td:nth-child(4)').textContent;
-                const codigoInterno = row.querySelector('td:nth-child(5)').textContent;
-                const valorUnitario = parseFloat(row.querySelector('td:nth-child(6)').textContent.replace('R$ ', ''));
-                const imagemUrl = row.querySelector('img') ? row.querySelector('img').src : '';
-
-                const newRow = document.createElement('tr');
-                newRow.innerHTML = `
-            <td>${imagemUrl ? `<img src="${imagemUrl}" alt="Imagem do Produto Selecionado" style="max-width: 50px;">` : '<span>Sem imagem</span>'}</td>
-            <td>${nomeProduto}</td>
-            <td>${codigoProduto}</td>
-            <td>${codigoInterno}</td>
-            <td style="white-space: nowrap;"><span class="valorUnitario">${valorUnitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
-            <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
-            <td style="white-space: nowrap;"> <span class="valorTotal">${valorUnitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
-            <th>Obs</th>
-            <td>
-                <i class="fa fa-question-circle" style="cursor: pointer; color: blue;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
-                <i class="fa fa-trash" style="cursor: pointer; color: red; margin-left: 10px;" onclick="removerProduto(this, '${ambienteSelecionado}')" title="Remover Produto"></i>
-            </td>
-            
-        `;
-                tabelaAmbiente.querySelector('tbody').appendChild(newRow);
-
-
-            });
-
-            // Reaplicar o sortable para garantir que todos os produtos sejam arrastáveis
-            $(`#tabela-${ambienteSelecionado} tbody`).sortable({
-                placeholder: "ui-state-highlight",
-                axis: "y",
-                handle: "tr"
-            }).disableSelection();
-
-            atualizarTodosOsCalculos(ambienteSelecionado);
-        }
+            return descricao.includes(pesquisa) || codigo.includes(pesquisa) || codigoProduto.includes(pesquisa);
+        });
 
         produtosFiltrados.forEach(produto => {
             const imagemUrl = produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url_imagem : '';
@@ -538,18 +484,16 @@ async function filtrarProdutos() {
 
             const row = document.createElement('tr');
             row.innerHTML = `
-        <td><input type="checkbox" class="checkbox-selecionar-produto" value="${produto.codigo_produto}"></td>
-        <td>${imagemHtml}</td>
-        <td class="produto-nome">${produto.descricao}</td>
-        <td>${produto.codigo}</td>
-        <td>${produto.codigo_produto}</td>
-        <td style="white-space: nowrap;">${produto.valor_unitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-        <td><i class="fa fa-eye" style="cursor: pointer;" onclick="verDetalhes('${produto.descr_detalhada}')"></i></td>
-    `;
+                <td><input type="checkbox" class="checkbox-selecionar-produto" value="${produto.codigo_produto}"></td>
+                <td>${imagemHtml}</td>
+                <td class="produto-nome">${produto.descricao}</td>
+                <td>${produto.codigo}</td>
+                <td>${produto.codigo_produto}</td>
+                <td style="white-space: nowrap;">${produto.valor_unitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td><i class="fa fa-eye" style="cursor: pointer;" onclick="verDetalhes('${produto.descr_detalhada}')"></i></td>
+            `;
             tabelaProdutos.appendChild(row);
         });
-
-
 
         // Tornar os itens arrastáveis dentro da tabela de produtos
         $("#tabelaProdutos").sortable();
@@ -557,6 +501,8 @@ async function filtrarProdutos() {
         console.error('Erro ao buscar produtos:', error);
     }
 }
+
+
 
 // Função para criar uma nova tabela para um ambiente específico
 function criarTabelaAmbiente(ambiente) {
@@ -807,7 +753,7 @@ function validarDesconto() {
     const desconto = parseFloat(document.getElementById('desconto').value);
 
     // Verifica se o desconto é maior que 4%
-    if (desconto > 4) {
+    if (desconto >= 4) {
         const senha = prompt("Desconto superior a 4%. Insira a senha de segurança do gestor:");
 
         // Verifica se a senha está correta
@@ -1864,8 +1810,18 @@ async function atualizarProposta() {
 
 
 async function gerarEEnviarProposta() {
+    // Verificar se existe algum valor igual a 0 na tabela
+    const temValorZero = [...document.querySelectorAll('#tabelasAmbientes .valorUnitario, #tabelasAmbientes .valorTotal')].some(cell => {
+        const valor = parseFloat(cell.innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        return valor === 0 || isNaN(valor);
+    });
+
+    if (temValorZero) {
+        alert('Um produto com valor 0,00 está presente. Por favor, corrija antes de gerar a folha de proposta.');
+        return;
+    }
+
     // Obter valores do formulário
-    verificarValoresTabela()
     alert('Processamento do pedido no financeiro foi enviado!');
     const codigoCliente = document.getElementById('idClienteOmie').value.trim();
     const dataPrevisao = new Date().toLocaleDateString('pt-BR'); // Data atual no formato dd/mm/yyyy
@@ -1912,7 +1868,8 @@ async function gerarEEnviarProposta() {
                     unidade: "UN",
                     valor_desconto: 0,
                     valor_unitario: valorUnitario
-                }
+                },
+              
             });
         }
     });
@@ -1934,7 +1891,7 @@ async function gerarEEnviarProposta() {
         },
         informacoes_adicionais: {
             codigo_categoria: "1.05.98",
-            codigo_conta_corrente: 3502271006,
+            codigo_conta_corrente: "3528553913" , 
             consumidor_final: "S",
             enviar_email: "N"
         },
@@ -1952,7 +1909,7 @@ async function gerarEEnviarProposta() {
 
     // Enviar a estrutura gerada para a API
     try {
-        console.log(proposta)
+        console.log(proposta);
         const response = await fetch('https://acropoluz-one-cdc9c4e154cc.herokuapp.com/omie/incluir-pedido', {
             method: 'POST',
             headers: {
@@ -1967,13 +1924,185 @@ async function gerarEEnviarProposta() {
 
         const responseData = await response.json();
         console.log('Proposta enviada com sucesso:', responseData);
-         // Mostrar alerta de sucesso
-         alert('Seu pedido foi enviado para o financeiro com sucesso!');
+        alert('Seu pedido foi enviado para o financeiro com sucesso!');
+        atualizarPropostaEfetivado ()
+        // Chamar a função para atualizar a proposta
+       
     } catch (error) {
         console.error('Erro ao enviar a proposta:', error);
         alert('Aconteceu algo de errado!');
     }
 }
+async function atualizarPropostaEfetivado () {
+    // Obter o ID do pedido da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idPedido = urlParams.get('id');
+
+    if (!idPedido) {
+        console.error("ID do pedido não encontrado na URL.");
+        return;
+    }
+
+    try {
+        // Remover a parte "Excluir Ambiente" dos títulos
+        document.querySelectorAll("#tabelasAmbientes .ambiente-container h4").forEach(header => {
+            header.innerText = header.innerText.replace("Excluir Ambiente", "").trim();
+        });
+
+        // Obter todos os produtos e ambientes
+        const produtos = [];
+        document.querySelectorAll("#tabelasAmbientes .ambiente-container").forEach(container => {
+            const ambiente = container.querySelector("h4").innerText.trim();
+            container.querySelectorAll("tbody tr").forEach((row) => {
+                const nomeProduto = row.querySelector("td:nth-child(3)")?.innerText.trim() || '';
+                const codigoProduto = row.querySelector("td:nth-child(4)")?.innerText.trim() || '';
+                const codigoInterno = row.querySelector("td:nth-child(5)")?.innerText.trim() || '';
+                const valorUnitario = parseFloat(row.querySelector(".valorUnitario")?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.') || 0);
+                const quantidade = parseFloat(row.querySelector(".quantidadeProduto")?.value || 0);
+                const valorTotal = parseFloat(row.querySelector(".valorTotal")?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.') || 0);
+                let observacao = '';
+
+                // Verificar observação
+                if (row.querySelector("td:nth-child(9) textarea")) {
+                    observacao = row.querySelector("td:nth-child(9) textarea").value.trim();
+                } else {
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow && nextRow.classList.contains('observacao-row')) {
+                        observacao = nextRow.querySelector('textarea')?.value.trim() || '';
+                    }
+                }
+
+                if (nomeProduto && !isNaN(valorUnitario) && !isNaN(quantidade) && !isNaN(valorTotal)) {
+                    produtos.push({
+                        nomeProduto,
+                        codigoProduto,
+                        codigoInterno,
+                        valorUnitario,
+                        quantidade,
+                        valorTotal,
+                        observacao,
+                        ambiente,
+                        statusSeparacao: 'Efetivado' // Atualiza o status para 'Efetivado'
+                    });
+                }
+            });
+        });
+
+        // Construir o objeto do pedido
+        const pedido = {
+            produtos,
+            codigoClienteOmie: document.getElementById('idClienteOmie').value.trim(),
+        };
+
+        // Fazer a requisição de atualização do pedido
+        const response = await fetch(`https://acropoluz-one-cdc9c4e154cc.herokuapp.com/pedido/${idPedido}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(pedido)
+        });
+
+        // Analisar a resposta
+        if (response.ok) {
+            alert('Proposta atualizada com sucesso!');
+            window.location.reload();
+        } else {
+            const errorData = await response.json();
+            console.error('Erro ao atualizar a proposta:', errorData);
+            alert(`Erro ao atualizar a proposta: ${errorData.message}`);
+        }
+    } catch (error) {
+        console.error('Erro ao fazer a requisição:', error);
+        alert('Erro ao se conectar ao servidor. Tente novamente mais tarde.');
+    }
+}
+async function atualizarProposta() {
+    // Obter o ID do pedido da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idPedido = urlParams.get('id');
+
+    if (!idPedido) {
+        console.error("ID do pedido não encontrado na URL.");
+        return;
+    }
+
+    try {
+        // Remover a parte "Excluir Ambiente" dos títulos
+        document.querySelectorAll("#tabelasAmbientes .ambiente-container h4").forEach(header => {
+            header.innerText = header.innerText.replace("Excluir Ambiente", "").trim();
+        });
+
+        // Obter todos os produtos e ambientes
+        const produtos = [];
+        document.querySelectorAll("#tabelasAmbientes .ambiente-container").forEach(container => {
+            const ambiente = container.querySelector("h4").innerText.trim();
+            container.querySelectorAll("tbody tr").forEach((row) => {
+                const nomeProduto = row.querySelector("td:nth-child(3)")?.innerText.trim() || '';
+                const codigoProduto = row.querySelector("td:nth-child(4)")?.innerText.trim() || '';
+                const codigoInterno = row.querySelector("td:nth-child(5)")?.innerText.trim() || '';
+                const valorUnitario = parseFloat(row.querySelector(".valorUnitario")?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.') || 0);
+                const quantidade = parseFloat(row.querySelector(".quantidadeProduto")?.value || 0);
+                const valorTotal = parseFloat(row.querySelector(".valorTotal")?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.') || 0);
+                let observacao = '';
+
+                // Verificar observação
+                if (row.querySelector("td:nth-child(9) textarea")) {
+                    observacao = row.querySelector("td:nth-child(9) textarea").value.trim();
+                } else {
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow && nextRow.classList.contains('observacao-row')) {
+                        observacao = nextRow.querySelector('textarea')?.value.trim() || '';
+                    }
+                }
+
+                if (nomeProduto && !isNaN(valorUnitario) && !isNaN(quantidade) && !isNaN(valorTotal)) {
+                    produtos.push({
+                        nomeProduto,
+                        codigoProduto,
+                        codigoInterno,
+                        valorUnitario,
+                        quantidade,
+                        valorTotal,
+                        observacao,
+                        ambiente,
+                        statusSeparacao: 'Aberto' // Atualiza o status para 'Efetivado'
+                    });
+                }
+            });
+        });
+
+        // Construir o objeto do pedido
+        const pedido = {
+            produtos,
+            codigoClienteOmie: document.getElementById('idClienteOmie').value.trim(),
+        };
+
+        // Fazer a requisição de atualização do pedido
+        const response = await fetch(`https://acropoluz-one-cdc9c4e154cc.herokuapp.com/pedido/${idPedido}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(pedido)
+        });
+
+        // Analisar a resposta
+        if (response.ok) {
+            alert('Proposta atualizada com sucesso!');
+            window.location.reload();
+        } else {
+            const errorData = await response.json();
+            console.error('Erro ao atualizar a proposta:', errorData);
+            alert(`Erro ao atualizar a proposta: ${errorData.message}`);
+        }
+    } catch (error) {
+        console.error('Erro ao fazer a requisição:', error);
+        alert('Erro ao se conectar ao servidor. Tente novamente mais tarde.');
+    }
+}
+
+
 
 function verificarValoresTabela() {
     // Selecionar todas as células da tabela que possam conter valores
@@ -2041,6 +2170,7 @@ function gerarPaginaOrcamento() {
 
         linhasTabela.forEach(row => {
             let nomeProduto = row.querySelector('td:nth-child(3)').innerText.trim();
+            const codigoInterno = row.querySelector('td:nth-child(4)').innerText.trim();
             const valorUnitario = row.querySelector('.valorUnitario').innerText.replace(/[^\d,.-]/g, '').replace(',', '.');
             const quantidade = row.querySelector('.quantidadeProduto').value;
             const valorTotal = row.querySelector('.valorTotal').innerText.replace(/[^\d,.-]/g, '').replace(',', '.');
@@ -2052,6 +2182,7 @@ function gerarPaginaOrcamento() {
             linhasTabelaHtml += `
                 <tr>
                     <td>${nomeProduto}</td>
+                    <td>${codigoInterno}</td>
                     <td>${parseFloat(valorUnitario).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     <td>${quantidade}</td>
                     <td>${parseFloat(valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
@@ -2067,6 +2198,7 @@ function gerarPaginaOrcamento() {
                     <thead>
                         <tr>
                             <th>Nome do Produto</th>
+                            <th>Código Interno</th>
                             <th>Valor Unitário</th>
                             <th>QT</th>
                             <th>Valor Total</th>
@@ -2195,6 +2327,8 @@ function gerarPaginaOrcamento() {
         novaJanela.print();
     };
 }
+
+
 function gerarPaginaOrcamentoSemValores() {
     // Obter as informações do cliente e do pedido
     const nomeCliente = document.getElementById('nome').value;
