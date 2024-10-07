@@ -285,15 +285,15 @@ function atualizarTodosOsCalculos(ambiente) {
             
             if (!isNaN(valorUnitario) && !isNaN(quantidade) && quantidade > 0) {
                 const novoValorTotal = valorUnitario * quantidade;
-                valorTotalElement.textContent = novoValorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                valorTotalElement.textContent = novoValorTotal.toFixed(2);
                 totalAmbiente += novoValorTotal;
             } else {
-                valorTotalElement.textContent = 'R$ 0,00';
+                valorTotalElement.textContent = '0.00';
             }
         }
     });
 
-    document.getElementById(`total-${ambiente}`).textContent = `Total do Ambiente: ${totalAmbiente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+    document.getElementById(`total-${ambiente}`).textContent = `Total do Ambiente: ${totalAmbiente.toFixed(2)}`;
     atualizarTotalGeral();
 }
 
@@ -428,29 +428,6 @@ function removerProduto(icon, ambiente) {
 
 
 
-// Função para atualizar o total geral
-function atualizarTotalGeral() {
-    let totalGeral = 0;
-
-    document.querySelectorAll('.total-ambiente-bar').forEach(element => {
-        let totalAmbienteText = element.textContent.replace('Total do Ambiente: R$ ', '').trim();
-        totalAmbienteText = totalAmbienteText.replace(/\./g, '').replace(',', '.');
-
-        console.log('Total Ambiente Text:', totalAmbienteText); // Verificar valor extraído
-
-        const totalAmbiente = parseFloat(totalAmbienteText);
-
-        if (!isNaN(totalAmbiente)) {
-            totalGeral += totalAmbiente;
-        } else {
-            console.warn('Valor inválido encontrado:', totalAmbienteText); // Aviso para valores inválidos
-        }
-    });
-
-    console.log('Total Geral:', totalGeral); // Verificar o total geral calculado
-
-    document.getElementById('total-geral').textContent = `Total Geral: ${totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
-}
 
 
 
@@ -505,15 +482,13 @@ function atualizarValorTotal(input, valorUnitario) {
     }
 }
 
-
-
 function atualizarTotalGeral() {
     let totalGeral = 0;
 
     // Iterar por cada elemento que contém o total de um ambiente
     document.querySelectorAll('.total-ambiente-bar').forEach(element => {
-        // Remover texto e formatar para conversão numérica
-        let totalAmbienteText = element.textContent.replace(/[^\d,]/g, '').replace(',', '.');
+        // Remover todos os caracteres não numéricos e substituir vírgulas por pontos
+        let totalAmbienteText = element.textContent.replace(/[^\d.-]/g, '').replace(',', '.');
 
         // Converter para float
         const totalAmbiente = parseFloat(totalAmbienteText);
@@ -524,8 +499,8 @@ function atualizarTotalGeral() {
         }
     });
 
-    // Atualizar o valor total geral, formatando-o como moeda brasileira
-    document.getElementById('total-geral').textContent = `Total Geral: ${totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+    // Atualizar o valor total geral, formatando-o corretamente
+    document.getElementById('total-geral').textContent = `Total Geral: ${totalGeral.toFixed(2).replace('.', ',')}`;
 }
 
 
@@ -727,8 +702,8 @@ async function salvarProposta() {
         const dataEntrega = document.getElementById('dataEntrega').value;
 
         // Validações básicas para garantir que os campos obrigatórios estão preenchidos
-        if (!nome || !cpfCnpj || !endereco || !telefone || !vendedor || !dataEntrega) {
-            alert("Por favor, preencha todos os campos obrigatórios.");
+        if (!nome || !telefone || !vendedor) {
+            alert("Por favor, preencha todos os campos obrigatórios: Nome, Telefone e Vendedor.");
             return;
         }
 
@@ -1156,65 +1131,66 @@ async function gerarFolhaOrcamento() {
         
 
 
-function incluirProdutosSelecionados() {
-    const ambienteSelecionado = document.getElementById('ambienteSelecionado').value;
-
-    if (ambienteSelecionado === '') {
-        alert('Por favor, selecione um ambiente para adicionar produtos.');
-        return;
-    }
-
-    let tabelaAmbiente = document.getElementById(`tabela-${ambienteSelecionado}`);
-    if (!tabelaAmbiente) {
-        criarTabelaAmbiente(ambienteSelecionado);
-        tabelaAmbiente = document.getElementById(`tabela-${ambienteSelecionado}`);
-    }
-
-    const checkboxes = document.querySelectorAll('.checkbox-selecionar-produto:checked');
-    if (checkboxes.length === 0) {
-        alert('Nenhum produto selecionado.');
-        return;
-    }
-
-    checkboxes.forEach(checkbox => {
-        const row = checkbox.closest('tr');
-        const nomeProduto = row.querySelector('.produto-nome').textContent;
-        const codigoProduto = row.querySelector('td:nth-child(4)').textContent;
-        const codigoInterno = row.querySelector('td:nth-child(5)').textContent;
-        const valorUnitarioText = row.querySelector('td:nth-child(6)').textContent.replace('R$', '').trim();
-        const valorUnitario = parseFloat(valorUnitarioText.replace('.', '').replace(',', '.'));
-    
-        // Verifique se o valor unitário é um número válido
-        const valorUnitarioValido = !isNaN(valorUnitario) ? valorUnitario : 0;
-    
-        const imagemUrl = row.querySelector('img') ? row.querySelector('img').src : '';
-    
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td>${imagemUrl ? `<img src="${imagemUrl}" alt="Imagem do Produto Selecionado" style="max-width: 50px;">` : '<span>Sem imagem</span>'}</td>
-            <td>${nomeProduto}</td>
-            <td>${codigoProduto}</td>
-            <td>${codigoInterno}</td>
-            <td style="white-space: nowrap;">R$ <span class="valorUnitario">${valorUnitarioValido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
-            <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
-            <td style="white-space: nowrap;">R$ <span class="valorTotal">${valorUnitarioValido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
-            <td>
-                <i class="fa fa-question-circle" style="cursor: pointer; color: blue; margin-right: 10px;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
-                <i class="fa fa-times" style="cursor: pointer; color: red;" onclick="removerProduto(this, '${ambienteSelecionado}')" title="Remover Produto"></i>
-            </td>
-        `;
-        tabelaAmbiente.querySelector('tbody').appendChild(newRow);
-    });
-    
-    // Reaplicar o sortable para garantir que todos os produtos sejam arrastáveis
-    $(`#tabela-${ambienteSelecionado} tbody`).sortable({
-        placeholder: "ui-state-highlight",
-        axis: "y",
-        handle: "tr"
-    }).disableSelection();
-
-    atualizarTodosOsCalculos(ambienteSelecionado);
-}
+        function incluirProdutosSelecionados() {
+            const ambienteSelecionado = document.getElementById('ambienteSelecionado').value;
+        
+            if (ambienteSelecionado === '') {
+                alert('Por favor, selecione um ambiente para adicionar produtos.');
+                return;
+            }
+        
+            let tabelaAmbiente = document.getElementById(`tabela-${ambienteSelecionado}`);
+            if (!tabelaAmbiente) {
+                criarTabelaAmbiente(ambienteSelecionado);
+                tabelaAmbiente = document.getElementById(`tabela-${ambienteSelecionado}`);
+            }
+        
+            const checkboxes = document.querySelectorAll('.checkbox-selecionar-produto:checked');
+            if (checkboxes.length === 0) {
+                alert('Nenhum produto selecionado.');
+                return;
+            }
+        
+            checkboxes.forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                const nomeProduto = row.querySelector('.produto-nome').textContent;
+                const codigoProduto = row.querySelector('td:nth-child(4)').textContent;
+                const codigoInterno = row.querySelector('td:nth-child(5)').textContent;
+                const valorUnitarioText = row.querySelector('td:nth-child(6)').textContent.replace('R$', '').trim();
+                const valorUnitario = parseFloat(valorUnitarioText.replace('.', '').replace(',', '.'));
+            
+                // Verifique se o valor unitário é um número válido
+                const valorUnitarioValido = !isNaN(valorUnitario) ? valorUnitario : 0;
+            
+                const imagemUrl = row.querySelector('img') ? row.querySelector('img').src : '';
+            
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${imagemUrl ? `<img src="${imagemUrl}" alt="Imagem do Produto Selecionado" style="max-width: 50px;">` : '<span>Sem imagem</span>'}</td>
+                    <td>${nomeProduto}</td>
+                    <td>${codigoProduto}</td>
+                    <td>${codigoInterno}</td>
+                    <td><span class="valorUnitario">${valorUnitarioValido}</span></td>
+                    <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
+                    <td><span class="valorTotal">${valorUnitarioValido}</span></td>
+                    <td>
+                        <i class="fa fa-question-circle" style="cursor: pointer; color: blue; margin-right: 10px;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
+                        <i class="fa fa-times" style="cursor: pointer; color: red;" onclick="removerProduto(this, '${ambienteSelecionado}')" title="Remover Produto"></i>
+                    </td>
+                `;
+                tabelaAmbiente.querySelector('tbody').appendChild(newRow);
+            });
+            
+            // Reaplicar o sortable para garantir que todos os produtos sejam arrastáveis
+            $(`#tabela-${ambienteSelecionado} tbody`).sortable({
+                placeholder: "ui-state-highlight",
+                axis: "y",
+                handle: "tr"
+            }).disableSelection();
+        
+            atualizarTodosOsCalculos(ambienteSelecionado);
+        }
+        
 
 function adicionarObservacao(icon) {
     const row = icon.closest('tr');
