@@ -1,0 +1,191 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.navbar {
+    margin-bottom: 40px;
+}
+
+h1, h3 {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.table {
+    margin-top: 20px;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 10px 20px;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+.btn-success {
+    margin-top: 20px;
+}
+.table-bordered th, .table-bordered td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.btn-danger {
+    margin-top: 5px;
+}
+.tooltip {
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 5px;
+    position: absolute;
+    z-index: 1000;
+    font-size: 14px;
+    max-width: 200px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo para o popup de imagem */
+.image-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.image-popup img {
+    max-width: 80%;
+    max-height: 80%;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.image-popup .close-popup {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 30px;
+    color: white;
+    cursor: pointer;
+}
+
+ /* Estilo para o popup de imagem */
+ .image-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.image-popup img {
+    max-width: 80%;
+    max-height: 80%;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.image-popup .close-popup {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 30px;
+    color: white;
+    cursor: pointer;
+}
+
+/* Barra inferior fixa */
+.fixed-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #343a40;
+    color: white;
+    padding: 10px 20px;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1002;
+}
+
+.fixed-bottom-bar button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Espaço reservado para a barra inferior */
+.content-space {
+    height: 80px;
+}
+
+/* Forçar títulos dos ambientes em maiúsculo */
+.ambiente-title {
+    text-transform: uppercase;
+}
+
+/* Estilos para impressão */
+@media print {
+    body {
+        zoom: 100%;
+    }
+
+    .no-print {
+        display: none !important; /* Elementos que não devem ser impressos */
+    }
+
+    .container-principal {
+        display: block;
+    }
+
+    .form-container,
+    .tabela-container {
+        width: 100%;
+    }
+
+    table {
+        page-break-inside: auto;
+    }
+
+    table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    /* Ocultar botões e colunas desnecessárias na impressão */
+    .no-print-col {
+        display: none !important;
+    }
+
+    /* Título do orçamento */
+    .orcamento-valido-text {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+}

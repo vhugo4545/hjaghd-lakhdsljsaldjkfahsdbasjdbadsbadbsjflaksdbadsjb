@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orçamento com Bootstrap e PDF</title>
+    <!-- Link do Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Dompurify Library -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.10/dist/purify.min.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div id="budget-container" class="card p-4">
+        <h1 class="text-center mb-4">Orçamento</h1>
+
+        <div class="section mb-4" id="client-info">
+            <h4>Informações do Cliente</h4>
+            <p><strong>Nome:</strong> João Silva</p>
+            <p><strong>Endereço:</strong> Rua Exemplo, 123</p>
+            <p><strong>Telefone:</strong> (11) 1234-5678</p>
+        </div>
+
+        <div class="section" id="items">
+            <h4>Itens do Orçamento</h4>
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantidade</th>
+                        <th>Preço Unitário</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Produto A</td>
+                        <td>2</td>
+                        <td>R$ 50,00</td>
+                        <td>R$ 100,00</td>
+                    </tr>
+                    <tr>
+                        <td>Produto B</td>
+                        <td>1</td>
+                        <td>R$ 150,00</td>
+                        <td>R$ 150,00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <button class="btn btn-primary" onclick="generatePDF()">Gerar PDF</button>
+    </div>
+</div>
+
+<script>
+    // Função para gerar PDF usando jsPDF
+    async function generatePDF() {
+        const { jsPDF } = window.jspdf;
+
+        // Cria uma nova instância do jsPDF
+        const doc = new jsPDF();
+
+        // Seleciona o conteúdo do orçamento
+        const elementHTML = document.getElementById('budget-container').innerHTML;
+
+        // Sanitiza o HTML com dompurify antes de gerar o PDF
+        const sanitizedHTML = DOMPurify.sanitize(elementHTML);
+
+        // Adiciona o conteúdo ao PDF
+        await doc.html(sanitizedHTML, {
+            callback: function (doc) {
+                // Salva o PDF com o nome "orcamento.pdf"
+                doc.save('orcamento.pdf');
+            },
+            x: 10,
+            y: 10
+        });
+    }
+</script>
+
+<!-- Link do Bootstrap JavaScript e dependências -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

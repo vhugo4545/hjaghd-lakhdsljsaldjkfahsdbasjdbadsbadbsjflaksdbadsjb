@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Proposta</title>
+
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery (necessário para Sortable e Autocomplete) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+ 
+  
+    <!-- Font Awesome para os ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Bibliotecas jsPDF e html2canvas para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Estilo customizado -->
+    <link rel="stylesheet" href="/novo-orcamento-style.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css">
+  
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- jQuery UI -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+
+</head>
+
+<body>
+    <style>
+        .ui-sortable-handle {
+        cursor: move; /* Muda o cursor para uma mãozinha indicando que o elemento pode ser movido */
+    }
+        .total-ambiente-bar, .total-geral-bar {
+            width: 100%;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+    
+        .total-ambiente-bar {
+            background-color: #878c91; /* Dark grey */
+            color: #ffffff; /* White text */
+            padding: 15px;
+            margin-top: 10px;
+            text-align: center;
+        }
+       
+#btnRemoverSelecionados{
+    margin-top: 20px;
+}
+    
+        .total-geral-bar {
+            background-color: #8e9092; /* Blue */
+            color: #ffffff; /* White text */
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .ambiente-container h4 {
+            text-align: center;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .ui-state-highlight {
+            background: #f0f0f0; /* Cor do placeholder ao arrastar */
+            height: 40px; /* Altura do placeholder */
+        }
+        .fixed-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f8f9fa; /* Cor de fundo da barra */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2); /* Sombra para destacar a barra */
+    padding: 10px 20px; /* Espaçamento interno para os botões */
+    display: flex;
+    justify-content: flex-start; /* Alinhar os botões à direita */
+    align-items: center;
+    gap: 10px; /* Espaçamento entre os botões */
+    z-index: 1000; /* Garante que a barra fique sobre outros elementos */
+}
+
+.fixed-bottom-bar button {
+    background-color: #007bff; /* Cor de fundo dos botões */
+    color: #fff; /* Cor do texto dos botões */
+    border: none; /* Remove a borda padrão */
+    padding: 10px 20px; /* Espaçamento interno dos botões */
+    font-size: 16px; /* Tamanho da fonte dos botões */
+    border-radius: 5px; /* Arredondamento dos cantos dos botões */
+    cursor: pointer; /* Cursor de "mãozinha" ao passar sobre os botões */
+    transition: background-color 0.3s; /* Animação suave ao passar o mouse */
+}
+
+.fixed-bottom-bar button:hover {
+    background-color: #0056b3; /* Cor de fundo ao passar o mouse */
+}
+
+    </style>
+
+
+    
+    <!-- Menu de navegação -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Acropoluz</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="index.html">Pedidos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Sobre</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contato</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        verificarAutenticacao()
+        // Função para verificar se o token de autenticação existe
+        function verificarAutenticacao() {
+            const token = localStorage.getItem("authToken");
+    
+            if (!token) {
+                // Redirecionar para a página de login se o token não existir
+                window.location.href = "index.html";
+            }
+        }
+    
+        // Chamar a função ao carregar a página
+        document.addEventListener("DOMContentLoaded", verificarAutenticacao);
+    </script>
+    
+    <script>
+        $(document).ready(function () {
+            function tornarTodasAsTabelasOrdenaveis() {
+                $('table.table tbody').sortable({
+                    placeholder: "ui-state-highlight",
+                    axis: "y",
+                    cursor: "move",
+                    update: function (event, ui) {
+                        console.log("Tabela ordenada!");
+                    }
+                }).disableSelection();
+            }
+    
+            tornarTodasAsTabelasOrdenaveis();
+        });
+    </script>
+    
+    <!-- Formulário de Novo Orçamento -->
+
+    <div class="container my-5" id="orcamentoContainer">
+        <div class="container my-5" id="orcamentoContainer">
+            <div class="d-flex align-items-start">
+                <!-- Adicionando a imagem ao lado esquerdo -->
+                <img src="WhatsApp Image 2024-09-30 at 3.06.27 PM.jpeg" alt="Logo Orçamento" class="img-fluid me-3" style="width: 150px; height: 150px; object-fit: contain;">
+                
+                <!-- Informações da empresa ao lado direito da logo -->
+                <div>
+                    <p class="mb-1"><strong> Acrópoluz Soluções em Iluminação</strong></p>
+                    <p class="mb-1">Endereço: Av. Portugal, 4370 - Itapoã, Belo Horizonte - MG, 31270-705</p>
+                    <p class="mb-1">Telefone:  (31) 3448-2500</p>
+                    <p class="mb-1">Email: contato@acropoluz.com.br</p>
+                    <p class="mb-1">CNPJ: 48.008.794/0001-66</p>
+                    <p class="mb-1">Inscrição estadual: 44448850048</p>
+                </div>
+            </div>
+        </div>
+        
+        <hr>
+        <center>
+        <H1> Proposta Comercial </H1>
+    </center>
+        <br>
+        <hr>
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <form id="novoOrcamentoForm">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="nome" class="form-label">Nome</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="nome" placeholder="Pesquisar ou adicionar cliente" required>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="buscarClientes()">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="atualizarClientes()">
+                                        <i class="fa fa-refresh"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="cadastrarNovoCliente()">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="clienteSuggestions" class="lista-autocomplete" style="position: absolute; border: 1px solid #ddd; background: white; display: none;"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="cpfCnpj" class="form-label">CPF/CNPJ</label>
+                                <input type="text" class="form-control" id="cpfCnpj" placeholder="Digite o CPF ou CNPJ" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="endereco" class="form-label">Endereço</label>
+                                <input type="text" class="form-control" id="endereco" placeholder="Digite o endereço" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="idClienteOmie" class="form-label">ID Cliente Omie</label>
+                                <input type="text" class="form-control" id="idClienteOmie" placeholder="ID do Cliente Omie" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="numeroComplemento" class="form-label">Número/Complemento</label>
+                                <input type="text" class="form-control" id="numeroComplemento" placeholder="Número e complemento">
+                            </div>
+                            <div class="mb-3">
+                                <label for="numeroComplemento" class="form-label">Endereco de entrega</label>
+                                <input type="text" class="form-control" id="numeroComplemento" placeholder="Número e complemento">
+                            </div>
+                            <div class="mb-3">
+                                <label for="telefone" class="form-label">Telefone</label>
+                                <input type="text" class="form-control" id="telefone" placeholder="Digite o telefone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tipoEntrega" class="form-label">Tipo de Entrega</label>
+                                <select class="form-control" id="tipoEntrega">
+                                    <option value="">Selecione o tipo de entrega</option>
+                                    <option value="cliente">Por conta do cliente</option>
+                                    <option value="acropoluz">Por conta da Acropoluz</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="valorFrete" class="form-label">Valor do Frete</label>
+                                <input type="text" class="form-control" id="valorFrete" placeholder="Digite o valor do frete">
+                            </div>
+                            
+                              
+                            
+                        </div>
+                
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="agenteArquiteto" class="form-label">Agente/Arquiteto</label>
+                                <input type="text" class="form-control" id="agenteArquiteto" placeholder="Agente ou Arquiteto">
+                            </div>
+                          
+                            <div class="mb-3">
+                                <label for="dataEntrega" class="form-label">Data de Previsão de Entrega</label>
+                                <input type="date" class="form-control" id="dataEntrega" required>
+                            </div>
+                
+                            <div class="mb-3">
+                                <label for="selectVendedor" class="form-label">Selecionar Vendedor</label>
+                                <select class="form-control" id="selectVendedor">
+                                    <option value="">Selecione um vendedor</option>
+                                    <option value="Cicero Magalhaes">Cícero Magalhães</option>
+                                    <option value="Daniela Turchetti C Magalhaes">Daniela Turchetti C Magalhaes</option>
+                                    <option value="Pamella Fernanda Porto Matias">Pâmella Fernanda Porto Matias</option>
+                                    <option value="Roberta Aparecida Venancio Carvalho">Roberta Aparecida Venâncio Carvalho</option>
+                                    <option value="Valeria Sousa Maciel">Valéria Sousa Maciel</option>
+                                    <option value="Scarlleth Fernandes">Scarlleth Fernandes</option>
+                                    <option value="Isabella David">Isabella David</option>
+                                    <option value="Roberto Ramos Paco">Roberto Ramos Pacó</option>
+                                    <option value="Marcelo Versiani">Marcelo Versiani</option>
+                                    <option value="Nayene Karen Lemos Carvalho">Nayene Karen Lemos Carvalho</option>
+                                    <option value="Paulo Leite">Paulo Leite</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tipoPagamento" class="form-label">Tipo de Pagamento</label>
+                                <select class="form-control" id="tipoPagamento">
+                                    <option value="">Selecione o tipo de pagamento</option>
+                                    <option value="pix">Pix</option>
+                                    <option value="dinheiro">Dinheiro</option>
+                                    <option value="cartaoDebito">Cartão de Débito</option>
+                                    <option value="cartaoCredito1x">Cartão Crédito 1x</option>
+                                    <option value="cartaoCreditoParcelado">Cartão Crédito Parcelado</option>
+                                    <option value="boleto">Boleto</option>
+                                    <option value="pixBoleto">Pix e Boleto (Pagamento em 2 formas)</option>
+                                    <option value="pixCartao">Pix e Cartão (Pagamento em 2 formas)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="desconto" class="form-label">Desconto (%):</label>
+                                <input type="number"  class="form-control"id="desconto" value="0" min="0" max="100" onchange="validarDesconto()">
+                            </div>
+                          
+                        </div>
+                    </div>
+                </form>
+                
+
+                <!-- Modal para Cadastrar Novo Cliente -->
+                <div class="modal fade" id="cadastrarClienteModal" tabindex="-1" aria-labelledby="cadastrarClienteModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="cadastrarClienteModalLabel">Cadastrar Novo Cliente</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="cadastrarClienteForm">
+                                    <div class="mb-3">
+                                        <label for="clienteEmail" class="form-label">E-mail</label>
+                                        <input type="email" class="form-control" id="clienteEmail" placeholder="Digite o e-mail" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="clienteRazaoSocial" class="form-label">Razão Social</label>
+                                        <input type="text" class="form-control" id="clienteRazaoSocial" placeholder="Digite a razão social" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="clienteNomeFantasia" class="form-label">Nome Fantasia</label>
+                                        <input type="text" class="form-control" id="clienteNomeFantasia" placeholder="Digite o nome fantasia" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="clienteTelefone" class="form-label">Telefone</label>
+                                        <input type="text" class="form-control" id="clienteTelefone" placeholder="Digite o nome fantasia" required>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                <button type="button" class="btn btn-primary" onclick="salvarCliente()">Salvar Cliente</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+
+<!-- Inclua o JavaScript do Bootstrap (Bootstrap 5) -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMzrZ6s2ZVVfFl2kMRY4Q8hAqLybp7pvsGA7SI0ksozoW88aLkfyb62JfCv" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js" integrity="sha384-2jVRj5EM1rRFzYfaT0eCWpKw4ZSlAwTMR9kz7knFY7E7w3cf9IxTVRUMd8Pfgb7y" crossorigin="anonymous"></script>
+
+<script>
+    // Função para abrir o modal de cadastro de cliente
+    function cadastrarNovoCliente() {
+        var myModal = new bootstrap.Modal(document.getElementById('cadastrarClienteModal'), {
+            keyboard: false
+        });
+        myModal.show();
+    }
+
+    // Função para salvar os dados do cliente (precisa ser implementada)
+    function salvarCliente() {
+        // Lógica para salvar o cliente
+        alert('Cliente salvo com sucesso!');
+    }
+</script>
+
+<!-- Modal para Incluir Produto Genérico -->
+<div class="modal fade" id="produtoGenericoModal" tabindex="-1" aria-labelledby="produtoGenericoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="produtoGenericoModalLabel">Incluir Produto Genérico</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="produtoNome" class="form-label">Nome do Produto</label>
+            <input type="text" class="form-control" id="produtoNome" placeholder="Digite o nome do produto">
+          </div>
+          <div class="mb-3">
+            <label for="produtoImagemUrl" class="form-label">URL da Imagem</label>
+            <input type="text" class="form-control" id="produtoImagemUrl" placeholder="Digite a URL da imagem">
+          </div>
+          <div class="mb-3">
+            <label for="produtoValorUnitario" class="form-label">Valor Unitário</label>
+            <input type="number" class="form-control" id="produtoValorUnitario" placeholder="Digite o valor unitário" min="0" step="0.01">
+          </div>
+          <div class="mb-3">
+            <label for="produtoQuantidade" class="form-label">Quantidade</label>
+            <input type="number" class="form-control" id="produtoQuantidade" placeholder="Digite a quantidade" min="1" value="1">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="adicionarProdutoGenerico()">Adicionar Produto</button>
+       
+       
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+                <!-- Pesquisa e Tabela de Produtos -->
+                <div class="row align-items-center no-print">
+                    <div class="col-md-7">
+                        <label for="pesquisaProduto" class="form-label">Pesquisar Produto</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="pesquisaProduto" placeholder="Digite o nome do produto" onkeyup="filtrarProdutos()">
+                            <button class="btn btn-outline-secondary" id="atualizarProdutosBtn" onclick="atualizarProdutos()">
+                                <i class="fa fa-refresh"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <label for="ambienteSelecionado" class="form-label">Escolha o Ambiente</label>
+                        <input type="text" class="form-control" id="ambienteSelecionado" placeholder="Digite o ambiente" onkeyup="pesquisarAmbiente()">
+                        <div id="ambienteSuggestions" class="lista-autocomplete" style="position: absolute; border: 1px solid #ddd; background: white; display: none;"></div>
+                    
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#produtoGenericoModal">Incluir Produto Genérico</button>
+                        <button id="btn-incluir-selecionados" class="btn btn-success" onclick="incluirProdutosSelecionados()">Incluir Produtos Selecionados</button>
+                        <button id="btnRemoverSelecionados" class="btn btn-danger">Remover Produtos Selecionados</button>
+
+
+                    </div>
+                </div>
+                
+
+                <!-- Tabela de Produtos (oculta quando a pesquisa estiver vazia) -->
+                <div id="divTabelaProdutos" style="display: none;" class="mt-3 no-print">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                
+                                <th>Seleção</th>
+                                <th>Imagem</th>
+                                <th>Nome</th>
+                                <th>Código</th>
+                                <th>Código Interno</th>
+                                <th>Valor</th>
+                                <th>Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaProdutos">
+                            <!-- Os produtos serão gerados e filtrados dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Tabelas de produtos adicionados, separadas por ambiente -->
+                <!-- Container onde as tabelas dos ambientes serão adicionadas dinamicamente -->
+<div class="mt-5" id="tabelasAmbientes">
+    <!-- As tabelas dos ambientes serão adicionadas dinamicamente aqui -->
+</div>
+
+<!-- Barra de totalização geral -->
+<div class="total-geral-bar mt-4 p-3 bg-dark text-white text-center" id="total-geral">Total Geral: R$ 0,00</div>
+
+
+<div id="total-com-desconto" class="total-geral-bar mt-4 p-3 bg-dark text-white text-center" style="display: none;">Total com Desconto Aplicado: R$ 0,00</div>
+
+            </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Espaço reservado para a barra inferior -->
+    <div class="content-space"></div>
+
+    <!-- Barra Inferior Fixa -->
+    <div class="fixed-bottom-bar">
+        <button onclick="salvarProposta()">Duplicar Proposta</button>
+        <button onclick="atualizarProposta()">Atualizar</button>
+        <button onclick="gerarPaginaOrcamento() ">Gerar Folha de Proposta</button>
+        <button onclick="gerarPaginaOrcamentoSemValores()">Versão de entrega</button>
+        <button onclick="gerarEEnviarProposta()">Baixa no pedido</button>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Função para tornar todas as tabelas ordenáveis
+            function tornarTodasAsTabelasOrdenaveis() {
+                document.querySelectorAll('table tbody').forEach(tableBody => {
+                    if (!tableBody.hasAttribute('data-sortable')) {
+                        tableBody.setAttribute('data-sortable', 'true'); // Evitar reatribuição da funcionalidade
+    
+                        let draggedRow = null;
+    
+                        // Evento quando começa a arrastar
+                        tableBody.addEventListener('dragstart', (event) => {
+                            if (event.target && event.target.nodeName === 'TR') {
+                                draggedRow = event.target;
+                                event.target.style.opacity = 0.5; // Reduzir a opacidade para indicar que está sendo arrastado
+                                console.log('Drag started on row:', draggedRow);
+                            }
+                        });
+    
+                        // Evento quando termina o arraste
+                        tableBody.addEventListener('dragend', (event) => {
+                            if (event.target && event.target.nodeName === 'TR') {
+                                event.target.style.opacity = ''; // Restaurar a opacidade
+                                console.log('Drag ended on row:', draggedRow);
+                            }
+                        });
+    
+                        // Evento quando arrastando sobre outra linha
+                        tableBody.addEventListener('dragover', (event) => {
+                            event.preventDefault(); // Necessário para permitir o drop
+                            const target = event.target.closest('tr');
+                            if (target && target !== draggedRow) {
+                                const bounding = target.getBoundingClientRect();
+                                const offset = event.clientY - bounding.top;
+    
+                                if (offset > bounding.height / 2) {
+                                    target.parentNode.insertBefore(draggedRow, target.nextSibling);
+                                    console.log('Row moved after target row:', target);
+                                } else {
+                                    target.parentNode.insertBefore(draggedRow, target);
+                                    console.log('Row moved before target row:', target);
+                                }
+                            }
+                        });
+    
+                        // Evento ao soltar a linha em outra posição
+                        tableBody.addEventListener('drop', (event) => {
+                            event.preventDefault();
+                            console.log('Row dropped:', draggedRow);
+                        });
+    
+                        // Tornar cada linha arrastável
+                        tableBody.querySelectorAll('tr').forEach(row => {
+                            row.setAttribute('draggable', 'true');
+                        });
+                    }
+                });
+            }
+    
+            // Tornar as tabelas ordenáveis ao carregar a página
+            tornarTodasAsTabelasOrdenaveis();
+    
+            // Verificar regularmente se novas tabelas foram adicionadas dinamicamente e torná-las ordenáveis
+            setInterval(tornarTodasAsTabelasOrdenaveis, 1000);
+        });
+    </script>
+    
+    
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JS Customizado -->
+    <script src="visualizar-orcamento-script.js"></script>
+   
+</body>
+
+</html>

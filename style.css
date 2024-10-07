@@ -1,0 +1,85 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: #ffffff;
+}
+
+.card h2 {
+    font-size: 2rem;
+}
+
+.table {
+    background-color: #ffffff;
+}
+
+.table th, .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 1rem;
+    padding: 0.5em;
+}
+
+#searchInput, #filterStatus {
+    margin-bottom: 20px;
+}
+
+/* Botão Flutuante */
+.float-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: #add8e6;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 50px;
+    font-size: 16px;
+    text-align: center;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.float-button:hover {
+    background-color: #87ceeb;
+}
+
+/* Estilo do Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover, .close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
