@@ -687,19 +687,19 @@ async function salvarProposta() {
             header.innerText = header.innerText.replace("Excluir Ambiente", "").trim();
         });
 
-        // Selecionar os campos do formulário
-        const nome = document.getElementById('nome').value.trim();
-        const cpfCnpj = document.getElementById('cpfCnpj').value.trim();
-        const endereco = document.getElementById('endereco').value.trim();
-        const numeroComplemento = document.getElementById('numeroComplemento').value.trim();
-        const telefone = document.getElementById('telefone').value.trim();
-        const vendedor = document.getElementById('selectVendedor').value.trim();
-        const agenteArquiteto = document.getElementById('agenteArquiteto').value.trim();
-        const tipoEntrega = document.getElementById('tipoEntrega').value.trim();
+        // Selecionar os campos do formulário e garantir que campos vazios sejam preenchidos
+        const nome = document.getElementById('nome').value.trim() || "Nome não informado";
+        const cpfCnpj = document.getElementById('cpfCnpj').value.trim() || "";
+        const endereco = document.getElementById('endereco').value.trim() || "";
+        const numeroComplemento = document.getElementById('numeroComplemento').value.trim() || "";
+        const telefone = document.getElementById('telefone').value.trim() || "Telefone não informado";
+        const vendedor = document.getElementById('selectVendedor').value.trim() || "Vendedor não informado";
+        const agenteArquiteto = document.getElementById('agenteArquiteto').value.trim() || "";
+        const tipoEntrega = document.getElementById('tipoEntrega').value.trim() || "cliente"; // Cliente como padrão
         const valorFrete = parseFloat(document.getElementById('valorFrete').value.trim()) || 0;
-        const tipoPagamento = document.getElementById('tipoPagamento').value.trim();
+        const tipoPagamento = document.getElementById('tipoPagamento').value.trim() || "pix"; // Pix como padrão
         const desconto = parseFloat(document.getElementById('desconto').value.trim()) || 0;
-        const dataEntrega = document.getElementById('dataEntrega').value;
+        const dataEntrega = document.getElementById('dataEntrega').value || null;
 
         // Validações básicas para garantir que os campos obrigatórios estão preenchidos
         if (!nome || !telefone || !vendedor) {
@@ -791,7 +791,7 @@ async function salvarProposta() {
                 dataEntrega,
             },
             produtos,
-            codigoClienteOmie: document.getElementById('idClienteOmie').value.trim(),
+            codigoClienteOmie: document.getElementById('idClienteOmie').value.trim() || "",
             status: 'Aberto',
         };
 
@@ -822,6 +822,7 @@ async function salvarProposta() {
         alert('Erro ao se conectar ao servidor. Tente novamente mais tarde.');
     }
 }
+
 
 
 
