@@ -1,6 +1,117 @@
 buscarClientes()
 buscarPedidoPorId()
 atualizarTotalGeral()
+
+async function gerarEEnviarProposta() {
+    // Obter valores do formulário
+    verificarValoresTabela()
+    alert('Processamento do pedido no financeiro foi enviado!');
+    const codigoCliente = document.getElementById('idClienteOmie').value.trim();
+    const dataPrevisao = new Date().toLocaleDateString('pt-BR'); // Data atual no formato dd/mm/yyyy
+    const numeroPedido = '93168'; // Você pode obter isso dinamicamente, se necessário
+
+    // Gerar um código aleatório usando a hora e segundos atuais e letras
+    function gerarCodigoAleatorio() {
+        const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        const numeros = Date.now().toString();
+        let resultado = '';
+        for (let i = 0; i < 3; i++) {
+            resultado += letras.charAt(Math.floor(Math.random() * letras.length));
+        }
+        return numeros + resultado;
+    }
+
+    // Obter todos os produtos da tabela
+    const produtos = [];
+    document.querySelectorAll("#tabelasAmbientes .ambiente-container tbody tr").forEach((row) => {
+        const nomeProduto = row.querySelector("td:nth-child(3)").innerText.trim();
+        const codigoProduto = row.querySelector("td:nth-child(4)").innerText.trim();
+        const codigoInterno = row.querySelector("td:nth-child(5)").innerText.trim();
+        const valorUnitario = parseFloat(row.querySelector("td:nth-child(6) .valorUnitario").innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        const quantidade = parseInt(row.querySelector("td:nth-child(7) .quantidadeProduto").value);
+        const valorTotal = parseFloat(row.querySelector("td:nth-child(8) .valorTotal").innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        const observacao = row.querySelector("td:nth-child(9) textarea") ? row.querySelector("td:nth-child(9) textarea").value.trim() : '';
+
+        if (!isNaN(valorUnitario) && !isNaN(quantidade) && !isNaN(valorTotal)) {
+            produtos.push({
+                ide: {
+                    codigo_item_integracao: gerarCodigoAleatorio()
+                },
+                inf_adic: {
+                    peso_bruto: 1,
+                    peso_liquido: 1
+                },
+                produto: {
+                    cfop: "5.102",
+                    codigo_produto: codigoInterno,
+                    descricao: nomeProduto,
+                    ncm: "9403.30.00",
+                    quantidade: quantidade,
+                    tipo_desconto: "V",
+                    unidade: "UN",
+                    valor_desconto: 0,
+                    valor_unitario: valorUnitario
+                }
+            });
+        }
+    });
+
+    // Construir o objeto da proposta
+    const proposta = {
+        cabecalho: {
+            codigo_cliente: codigoCliente,
+            codigo_pedido_integracao: gerarCodigoAleatorio(),
+            data_previsao: dataPrevisao,
+            etapa: "10",
+            numero_pedido: numeroPedido,
+            codigo_parcela: "999",
+            quantidade_itens: produtos.length
+        },
+        det: produtos,
+        frete: {
+            modalidade: "9"
+        },
+        informacoes_adicionais: {
+            codigo_categoria: "1.05.98",
+            codigo_conta_corrente: 3502271006,
+            consumidor_final: "S",
+            enviar_email: "N"
+        },
+        lista_parcelas: {
+            parcela: [
+                {
+                    data_vencimento: "04/10/2024",
+                    numero_parcela: 1,
+                    percentual: 100,
+                    valor: 100
+                }
+            ]
+        }
+    };
+
+    // Enviar a estrutura gerada para a API
+    try {
+        const response = await fetch('http://localhost:3000/omie/incluir-pedido', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(proposta)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro ao enviar a proposta. Status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        console.log('Proposta enviada com sucesso:', responseData);
+         // Mostrar alerta de sucesso
+         alert('Seu pedido foi enviado para o financeiro com sucesso!');
+    } catch (error) {
+        console.error('Erro ao enviar a proposta:', error);
+        alert('Aconteceu algo de errado!');
+    }
+}
 document.getElementById('btnRemoverSelecionados').addEventListener('click', function() {
     removerTodosProdutosSelecionados();
 });
