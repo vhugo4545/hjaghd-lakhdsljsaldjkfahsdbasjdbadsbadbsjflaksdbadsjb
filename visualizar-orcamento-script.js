@@ -246,9 +246,9 @@ function preencherFormularioComDadosPedido(pedido) {
                                 <td>${produto.nomeProduto}</td>
                                 <td>${produto.codigoProduto}</td>
                                 <td>${produto.codigoInterno}</td>
-                                <td style="white-space: nowrap;"> <span class="valorUnitario">&nbsp;${produto.valorUnitario}</span></td>
+                                <td style="white-space: nowrap;"><span class="valorUnitario">&nbsp;${produto.valorUnitario}</span></td>
                                 <td><input type="number" class="form-control quantidadeProduto" min="1" value="${produto.quantidade}" onchange="atualizarTodosOsCalculos('${ambiente}')"></td>
-                                <td style="white-space: nowrap;"><span class="valorTotal">&nbsp;${valorTotal.toFixed(2)}</span></td>
+                                <td style="white-space: nowrap;"><input type="number" class="form-control valorTotal" value="${valorTotal.toFixed(2)}" onchange="atualizarTodosOsCalculos('${ambiente}')"></td>
                                 <td><textarea class="form-control" rows="3" cols="30">${produto.observacao || ''}</textarea></td>
                                 <td>
                                     <i class="fa fa-question-circle" style="cursor: pointer; color: blue; margin-right: 10px;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
@@ -269,10 +269,6 @@ function preencherFormularioComDadosPedido(pedido) {
     // Atualizar os totais dos ambientes e o total geral
     atualizarTotalGeral();
 }
-
-
-
-
 
 
 
@@ -579,12 +575,19 @@ function atualizarTodosOsCalculos(ambiente) {
             let valorUnitario = parseFloat(valorUnitarioElement.textContent.replace(/[^\d,.-]/g, '').replace(',', '.'));
             let quantidade = parseFloat(quantidadeElement.value);
 
+            // Se o valor total foi editado, priorizamos ele
+            let valorTotal = parseFloat(valorTotalElement.value.replace(/[^\d,.-]/g, '').replace(',', '.'));
+
             if (!isNaN(valorUnitario) && !isNaN(quantidade)) {
-                const novoValorTotal = valorUnitario * quantidade;
-                valorTotalElement.textContent = `R$ ${novoValorTotal.toFixed(2).replace('.', ',')}`;
-                totalAmbiente += novoValorTotal;
+                // Se o campo de valor total não foi editado, calcule com base no valor unitário e quantidade
+                if (isNaN(valorTotal)) {
+                    valorTotal = valorUnitario * quantidade;
+                    valorTotalElement.value = valorTotal.toFixed(2).replace('.', ',');
+                }
+
+                totalAmbiente += valorTotal;
             } else {
-                valorTotalElement.textContent = 'R$ 0,00';
+                valorTotalElement.value = '0,00';
             }
         }
     });
@@ -771,36 +774,28 @@ function validarDesconto() {
 function atualizarTotalGeral() {
     let totalGeral = 0;
 
-    // Iterar sobre cada tabela de ambiente e somar os totais dos produtos
-    document.querySelectorAll("#tabelasAmbientes .ambiente-container").forEach(container => {
-        let totalAmbiente = 0;
+    // Iterar por cada elemento que contém o total de um ambiente
+    document.querySelectorAll('.total-ambiente-bar').forEach(element => {
+        let totalAmbienteText = element.textContent
+            .replace('Total do Ambiente: R$', '')
+            .replace(/\./g, '')
+            .replace(',', '.')
+            .trim();
+        
+        const totalAmbiente = parseFloat(totalAmbienteText);
 
-        container.querySelectorAll("tbody tr").forEach(row => {
-            const valorTotal = parseFloat(row.querySelector(".valorTotal").innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
-            totalAmbiente += valorTotal;
-        });
-
-        // Atualizar o total do ambiente na interface
-        container.querySelector('.total-ambiente-bar').innerText = `Total do Ambiente: R$ ${totalAmbiente.toFixed(2).replace('.', ',')}`;
-
-        totalGeral += totalAmbiente;
+        if (!isNaN(totalAmbiente)) {
+            totalGeral += totalAmbiente;
+        }
     });
 
-    // Calcular o total geral e aplicar desconto, se houver
-    const desconto = parseFloat(document.getElementById('desconto').value);
-    const totalComDesconto = desconto > 0 ? totalGeral * (1 - desconto / 100) : totalGeral;
+    // Atualizar o valor total geral, formatando-o como moeda brasileira
+    const totalGeralFormatado = totalGeral.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
 
-    // Atualizar o total geral na interface
-    document.getElementById('total-geral').innerText = `Total Geral: R$ ${totalGeral.toFixed(2).replace('.', ',')}`;
-
-    // Mostrar ou ocultar o valor com desconto, conforme o valor do desconto
-    const descontoElement = document.getElementById('total-com-desconto');
-    if (desconto > 0) {
-        descontoElement.style.display = "block";
-        descontoElement.innerText = `Total com Desconto Aplicado: R$ ${totalComDesconto.toFixed(2).replace('.', ',')}`;
-    } else {
-        descontoElement.style.display = "none";
-    }
+    document.getElementById('total-geral').textContent = `Total Geral: ${totalGeralFormatado}`;
 }
 
 
@@ -1515,19 +1510,22 @@ function incluirProdutosSelecionados() {
 
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
-            <td><input type="checkbox" class="checkbox-selecionar-produto"></td>
-            <td>${imagemUrl ? `<img src="${imagemUrl}" alt="Imagem do Produto Selecionado" style="max-width: 50px;">` : '<span>Sem imagem</span>'}</td>
-            <td>${nomeProduto}</td>
-            <td>${codigoProduto}</td>
-            <td>${codigoInterno}</td>
-            <td style="white-space: nowrap;"><span class="valorUnitario">${valorUnitarioValido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
-            <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
-            <td style="white-space: nowrap;"><span class="valorTotal">${valorUnitarioValido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
-            <td>
-                <i class="fa fa-question-circle" style="cursor: pointer; color: blue; margin-right: 10px;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
-                <i class="fa fa-times" style="cursor: pointer; color: red;" onclick="removerProduto(this, '${ambienteSelecionado}')" title="Remover Produto"></i>
-            </td>
-        `;
+        <td><input type="checkbox" class="checkbox-selecionar-produto"></td>
+        <td>${imagemUrl ? `<img src="${imagemUrl}" alt="Imagem do Produto Selecionado" style="max-width: 50px;">` : '<span>Sem imagem</span>'}</td>
+        <td>${nomeProduto}</td>
+        <td>${codigoProduto}</td>
+        <td>${codigoInterno}</td>
+        <td style="white-space: nowrap;"><span class="valorUnitario">${valorUnitarioValido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
+        <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
+      <td style="white-space: nowrap;">
+    <input type="number" class="form-control valorTotal" value="${valorUnitarioValido.toFixed(2)}" style="width: 120px;" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')">
+</td>
+  <td>
+            <i class="fa fa-question-circle" style="cursor: pointer; color: blue; margin-right: 10px;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
+            <i class="fa fa-times" style="cursor: pointer; color: red;" onclick="removerProduto(this, '${ambienteSelecionado}')" title="Remover Produto"></i>
+        </td>
+    `;
+    
         tabelaAmbiente.querySelector('tbody').appendChild(newRow);
     });
 
@@ -1673,130 +1671,6 @@ document.getElementById('btnRemoverSelecionados').addEventListener('click', func
 
 
 
-async function gerarEEnviarProposta() {
-    // Verificar se existe algum valor igual a 0 na tabela
-    const temValorZero = [...document.querySelectorAll('#tabelasAmbientes .valorUnitario, #tabelasAmbientes .valorTotal')].some(cell => {
-        const valor = parseFloat(cell.innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
-        return valor === 0 || isNaN(valor);
-    });
-
-    if (temValorZero) {
-        alert('Um produto com valor 0,00 está presente. Por favor, corrija antes de gerar a folha de proposta.');
-        return;
-    }
-
-    // Obter valores do formulário
-    alert('Processamento do pedido no financeiro foi enviado!');
-    const codigoCliente = document.getElementById('idClienteOmie').value.trim();
-    const dataPrevisao = new Date().toLocaleDateString('pt-BR'); // Data atual no formato dd/mm/yyyy
-    const numeroPedido = '93168'; // Você pode obter isso dinamicamente, se necessário
-
-    // Gerar um código aleatório usando a hora e segundos atuais e letras
-    function gerarCodigoAleatorio() {
-        const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-        const numeros = Date.now().toString();
-        let resultado = '';
-        for (let i = 0; i < 3; i++) {
-            resultado += letras.charAt(Math.floor(Math.random() * letras.length));
-        }
-        return numeros + resultado;
-    }
-
-    // Obter todos os produtos da tabela
-    const produtos = [];
-    document.querySelectorAll("#tabelasAmbientes .ambiente-container tbody tr").forEach((row) => {
-        const nomeProduto = row.querySelector("td:nth-child(3)").innerText.trim();
-        const codigoProduto = row.querySelector("td:nth-child(4)").innerText.trim();
-        const codigoInterno = row.querySelector("td:nth-child(4)").innerText.trim();
-        const valorUnitario = parseFloat(row.querySelector("td:nth-child(6) .valorUnitario").innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
-        const quantidade = parseInt(row.querySelector("td:nth-child(7) .quantidadeProduto").value);
-        const valorTotal = parseFloat(row.querySelector("td:nth-child(8) .valorTotal").innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
-        const observacao = row.querySelector("td:nth-child(9) textarea") ? row.querySelector("td:nth-child(9) textarea").value.trim() : '';
-
-        if (!isNaN(valorUnitario) && !isNaN(quantidade) && !isNaN(valorTotal)) {
-            produtos.push({
-                ide: {
-                    codigo_item_integracao: gerarCodigoAleatorio()
-                },
-                inf_adic: {
-                    peso_bruto: 1,
-                    peso_liquido: 1
-                },
-                produto: {
-                    cfop: "5.102",
-                    codigo_produto: codigoInterno,
-                    descricao: nomeProduto,
-                    ncm: "9403.30.00",
-                    quantidade: quantidade,
-                    tipo_desconto: "V",
-                    unidade: "UN",
-                    valor_desconto: 0,
-                    valor_unitario: valorUnitario
-                },
-              
-            });
-        }
-    });
-
-    // Construir o objeto da proposta
-    const proposta = {
-        cabecalho: {
-            codigo_cliente: codigoCliente,
-            codigo_pedido_integracao: gerarCodigoAleatorio(),
-            data_previsao: dataPrevisao,
-            etapa: "10",
-            numero_pedido: numeroPedido,
-            codigo_parcela: "999",
-            quantidade_itens: produtos.length
-        },
-        det: produtos,
-        frete: {
-            modalidade: "9"
-        },
-        informacoes_adicionais: {
-            codigo_categoria: "1.05.98",
-            codigo_conta_corrente: "3528553913" , 
-            consumidor_final: "S",
-            enviar_email: "N"
-        },
-        lista_parcelas: {
-            parcela: [
-                {
-                    data_vencimento: "04/10/2024",
-                    numero_parcela: 1,
-                    percentual: 100,
-                    valor: 100
-                }
-            ]
-        }
-    };
-
-    // Enviar a estrutura gerada para a API
-    try {
-        console.log(proposta);
-        const response = await fetch('https://acropoluz-one-cdc9c4e154cc.herokuapp.com/omie/incluir-pedido', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(proposta)
-        });
-
-        if (!response.ok) {
-            throw new Error(`Erro ao enviar a proposta. Status: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        console.log('Proposta enviada com sucesso:', responseData);
-        alert('Seu pedido foi enviado para o financeiro com sucesso!');
-        atualizarPropostaEfetivado ()
-        // Chamar a função para atualizar a proposta
-       
-    } catch (error) {
-        console.error('Erro ao enviar a proposta:', error);
-        alert('Aconteceu algo de errado!');
-    }
-}
 async function atualizarPropostaEfetivado () {
     // Obter o ID do pedido da URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -2036,10 +1910,7 @@ function gerarPaginaOrcamento() {
         return valor === 0 || isNaN(valor);
     });
 
-    if (temValorZero) {
-        alert('Um produto com valor 0,00 está presente. Por favor, corrija antes de gerar a folha de proposta.');
-        return;
-    }
+ 
 
     // Obter as informações do cliente e do pedido
     const nomeCliente = document.getElementById('nome').value;
@@ -2069,7 +1940,7 @@ function gerarPaginaOrcamento() {
             const codigoInterno = row.querySelector('td:nth-child(4)').innerText.trim();
             const valorUnitario = row.querySelector('.valorUnitario').innerText.replace(/[^\d,.-]/g, '').replace(',', '.');
             const quantidade = row.querySelector('.quantidadeProduto').value;
-            const valorTotal = row.querySelector('.valorTotal').innerText.replace(/[^\d,.-]/g, '').replace(',', '.');
+            const valorTotal = row.querySelector('.valorTotal').value;
             const observacao = row.querySelector('textarea') ? row.querySelector('textarea').value.trim() : '';
 
             // Filtrar o nome do produto: remover "**" e limitar aos 10 primeiros caracteres
