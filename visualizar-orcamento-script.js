@@ -2033,6 +2033,22 @@ async function atualizarProposta() {
             header.innerText = header.innerText.replace("Excluir Ambiente", "").trim();
         });
 
+        // Coletar dados do cliente
+        const nome = document.getElementById('nome').value.trim();
+        const cpfCnpj = document.getElementById('cpfCnpj').value.trim();
+        const endereco = document.getElementById('endereco').value.trim();
+        const numeroComplemento = document.getElementById('numeroComplemento').value.trim();
+        const telefone = document.getElementById('telefone').value.trim();
+
+        // Coletar informações do orçamento
+        const vendedor = document.getElementById('selectVendedor').value.trim();
+        const agenteArquiteto = document.getElementById('agenteArquiteto').value.trim();
+        const tipoEntrega = document.getElementById('tipoEntrega').value.trim();
+        const valorFrete = parseFloat(document.getElementById('valorFrete').value.trim()) || 0;
+        const tipoPagamento = document.getElementById('tipoPagamento').value.trim();
+        const desconto = parseFloat(document.getElementById('desconto').value.trim()) || 0;
+        const dataEntrega = document.getElementById('dataEntrega').value;
+
         // Obter todos os produtos e ambientes
         const produtos = [];
         document.querySelectorAll("#tabelasAmbientes .ambiente-container").forEach(container => {
@@ -2047,13 +2063,9 @@ async function atualizarProposta() {
                 let observacao = '';
 
                 // Verificar observação
-                if (row.querySelector("td:nth-child(9) textarea")) {
-                    observacao = row.querySelector("td:nth-child(9) textarea").value.trim();
-                } else {
-                    const nextRow = row.nextElementSibling;
-                    if (nextRow && nextRow.classList.contains('observacao-row')) {
-                        observacao = nextRow.querySelector('textarea')?.value.trim() || '';
-                    }
+                const nextRow = row.nextElementSibling;
+                if (nextRow && nextRow.classList.contains('observacao-row')) {
+                    observacao = nextRow.querySelector('textarea')?.value.trim() || '';
                 }
 
                 if (nomeProduto && !isNaN(valorUnitario) && !isNaN(quantidade) && !isNaN(valorTotal)) {
@@ -2066,7 +2078,7 @@ async function atualizarProposta() {
                         valorTotal,
                         observacao,
                         ambiente,
-                        statusSeparacao: 'Aberto' // Atualiza o status para 'Efetivado'
+                        statusSeparacao: 'Aberto'
                     });
                 }
             });
@@ -2074,9 +2086,29 @@ async function atualizarProposta() {
 
         // Construir o objeto do pedido
         const pedido = {
+            cliente: {
+                nome,
+                cpfCnpj,
+                endereco,
+                numeroComplemento,
+                telefone,
+            },
+            informacoesOrcamento: {
+                vendedor,
+                agenteArquiteto,
+                transportadora: tipoEntrega === 'acropoluz' ? 'Acropoluz' : 'Cliente',
+                tipoEntrega,
+                valorFrete,
+                tipoPagamento,
+                desconto,
+                dataEntrega,
+            },
             produtos,
             codigoClienteOmie: document.getElementById('idClienteOmie').value.trim(),
+            status: 'Aberto',
         };
+
+        console.log('Enviando pedido para salvar:', JSON.stringify(pedido, null, 2)); // Log detalhado para ver o pedido sendo enviado
 
         // Fazer a requisição de atualização do pedido
         const response = await fetch(`https://acropoluz-one-cdc9c4e154cc.herokuapp.com/pedido/${idPedido}`, {
