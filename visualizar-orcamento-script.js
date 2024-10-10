@@ -2,9 +2,46 @@ buscarClientes()
 buscarPedidoPorId()
 atualizarTotalGeral()
 
+function atualizarTodosOsCalculos1(tabelaId) {
+    // Localizar a tabela pelo ID dinâmico
+    const tabela = document.getElementById(`tabela-${tabelaId}`);
+    if (!tabela) return; // Se a tabela não existir, sair da função
+
+    // Selecionar todas as linhas do corpo da tabela
+    const linhas = tabela.querySelectorAll('tbody tr');
+
+    // Iterar sobre todas as linhas
+    linhas.forEach((linha) => {
+        // Selecionar o valor unitário e a quantidade
+        const valorUnitario = parseFloat(linha.querySelector('.valorUnitario').textContent.trim());
+        const quantidadeInput = linha.querySelector('.quantidadeProduto');
+        const valorTotalInput = linha.querySelector('.valorTotal');
+        
+        // Garantir que o valor unitário e a quantidade sejam válidos
+        const quantidade = parseFloat(quantidadeInput.value);
+
+        if (!isNaN(valorUnitario) && !isNaN(quantidade)) {
+            // Calcular o valor total
+            const valorTotal = valorUnitario * quantidade;
+
+            // Atualizar o campo de valor total com o resultado
+            valorTotalInput.value = valorTotal.toFixed(2);
+        }
+    });
+    atualizarTodosOsCalculos(tabelaId)
+    atualizarTotalGeral()
+}
+
 async function gerarEEnviarProposta() {
+    // Verificar se existe algum valor igual a 0 na tabela
+    const temValorZero = [...document.querySelectorAll('#tabelasAmbientes .valorUnitario, #tabelasAmbientes .valorTotal')].some(cell => {
+        const valor = parseFloat(cell.innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        return valor === 0 || isNaN(valor);
+    });
+
+
+
     // Obter valores do formulário
-    verificarValoresTabela()
     alert('Processamento do pedido no financeiro foi enviado!');
     const codigoCliente = document.getElementById('idClienteOmie').value.trim();
     const dataPrevisao = new Date().toLocaleDateString('pt-BR'); // Data atual no formato dd/mm/yyyy
@@ -26,10 +63,10 @@ async function gerarEEnviarProposta() {
     document.querySelectorAll("#tabelasAmbientes .ambiente-container tbody tr").forEach((row) => {
         const nomeProduto = row.querySelector("td:nth-child(3)").innerText.trim();
         const codigoProduto = row.querySelector("td:nth-child(4)").innerText.trim();
-        const codigoInterno = row.querySelector("td:nth-child(5)").innerText.trim();
+        const codigoInterno = row.querySelector("td:nth-child(4)").innerText.trim();
         const valorUnitario = parseFloat(row.querySelector("td:nth-child(6) .valorUnitario").innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
         const quantidade = parseInt(row.querySelector("td:nth-child(7) .quantidadeProduto").value);
-        const valorTotal = parseFloat(row.querySelector("td:nth-child(8) .valorTotal").innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        const valorTotal = parseFloat(row.querySelector("td:nth-child(8) .valorTotal").value);
         const observacao = row.querySelector("td:nth-child(9) textarea") ? row.querySelector("td:nth-child(9) textarea").value.trim() : '';
 
         if (!isNaN(valorUnitario) && !isNaN(quantidade) && !isNaN(valorTotal)) {
@@ -51,7 +88,8 @@ async function gerarEEnviarProposta() {
                     unidade: "UN",
                     valor_desconto: 0,
                     valor_unitario: valorUnitario
-                }
+                },
+              
             });
         }
     });
@@ -73,7 +111,7 @@ async function gerarEEnviarProposta() {
         },
         informacoes_adicionais: {
             codigo_categoria: "1.05.98",
-            codigo_conta_corrente: 3502271006,
+            codigo_conta_corrente: 3498195819,
             consumidor_final: "S",
             enviar_email: "N"
         },
@@ -91,7 +129,8 @@ async function gerarEEnviarProposta() {
 
     // Enviar a estrutura gerada para a API
     try {
-        const response = await fetch('http://localhost:3000/omie/incluir-pedido', {
+        console.log(proposta);
+        const response = await fetch('https://acropoluz-one-cdc9c4e154cc.herokuapp.com/omie/incluir-pedido', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -105,13 +144,102 @@ async function gerarEEnviarProposta() {
 
         const responseData = await response.json();
         console.log('Proposta enviada com sucesso:', responseData);
-         // Mostrar alerta de sucesso
-         alert('Seu pedido foi enviado para o financeiro com sucesso!');
+        alert('Seu pedido foi enviado para o financeiro com sucesso!');
+
+        // Chamar a função para atualizar a proposta
+        await atualizarProposta();
     } catch (error) {
         console.error('Erro ao enviar a proposta:', error);
         alert('Aconteceu algo de errado!');
     }
 }
+
+async function atualizarProposta() {
+    // Obter o ID do pedido da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idPedido = urlParams.get('id');
+
+    if (!idPedido) {
+        console.error("ID do pedido não encontrado na URL.");
+        return;
+    }
+
+    try {
+        // Remover a parte "Excluir Ambiente" dos títulos
+        document.querySelectorAll("#tabelasAmbientes .ambiente-container h4").forEach(header => {
+            header.innerText = header.innerText.replace("Excluir Ambiente", "").trim();
+        });
+
+        // Obter todos os produtos e ambientes
+        const produtos = [];
+        document.querySelectorAll("#tabelasAmbientes .ambiente-container").forEach(container => {
+            const ambiente = container.querySelector("h4").innerText.trim();
+            container.querySelectorAll("tbody tr").forEach((row) => {
+                const nomeProduto = row.querySelector("td:nth-child(3)")?.innerText.trim() || '';
+                const codigoProduto = row.querySelector("td:nth-child(4)")?.innerText.trim() || '';
+                const codigoInterno = row.querySelector("td:nth-child(5)")?.innerText.trim() || '';
+                const valorUnitario = parseFloat(row.querySelector(".valorUnitario")?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.') || 0);
+                const quantidade = parseFloat(row.querySelector(".quantidadeProduto")?.value || 0);
+                const valorTotal = parseFloat(row.querySelector(".valorTotal")?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.') || 0);
+                let observacao = '';
+
+                // Verificar observação
+                if (row.querySelector("td:nth-child(9) textarea")) {
+                    observacao = row.querySelector("td:nth-child(9) textarea").value.trim();
+                } else {
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow && nextRow.classList.contains('observacao-row')) {
+                        observacao = nextRow.querySelector('textarea')?.value.trim() || '';
+                    }
+                }
+
+                if (nomeProduto && !isNaN(valorUnitario) && !isNaN(quantidade) && !isNaN(valorTotal)) {
+                    produtos.push({
+                        nomeProduto,
+                        codigoProduto,
+                        codigoInterno,
+                        valorUnitario,
+                        quantidade,
+                        valorTotal,
+                        observacao,
+                        ambiente,
+                        statusSeparacao: 'Efetivado' // Atualiza o status para 'Efetivado'
+                    });
+                }
+            });
+        });
+
+        // Construir o objeto do pedido
+        const pedido = {
+            produtos,
+            codigoClienteOmie: document.getElementById('idClienteOmie').value.trim(),
+        };
+
+        // Fazer a requisição de atualização do pedido
+        const response = await fetch(`http://localhost:3000/pedido/${idPedido}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(pedido)
+        });
+
+        // Analisar a resposta
+        if (response.ok) {
+            alert('Proposta atualizada com sucesso!');
+            window.location.reload();
+        } else {
+            const errorData = await response.json();
+            console.error('Erro ao atualizar a proposta:', errorData);
+            alert(`Erro ao atualizar a proposta: ${errorData.message}`);
+        }
+    } catch (error) {
+        console.error('Erro ao fazer a requisição:', error);
+        alert('Erro ao se conectar ao servidor. Tente novamente mais tarde.');
+    }
+}
+
+
 document.getElementById('btnRemoverSelecionados').addEventListener('click', function() {
     removerTodosProdutosSelecionados();
 });
@@ -358,8 +486,8 @@ function preencherFormularioComDadosPedido(pedido) {
                                 <td>${produto.codigoProduto}</td>
                                 <td>${produto.codigoInterno}</td>
                                 <td style="white-space: nowrap;"><span class="valorUnitario">&nbsp;${produto.valorUnitario}</span></td>
-                                <td><input type="number" class="form-control quantidadeProduto" min="1" value="${produto.quantidade}" onchange="atualizarTodosOsCalculos('${ambiente}')"></td>
-                                <td style="white-space: nowrap;"><input type="number" class="form-control valorTotal" value="${valorTotal.toFixed(2)}" onchange="atualizarTodosOsCalculos('${ambiente}')"></td>
+                                <td><input type="number" class="form-control quantidadeProduto" min="1" value="${produto.quantidade}" onchange="atualizarTodosOsCalculos1('${ambiente}')"></td>
+                                <td style="white-space: nowrap;"><input type="number" class="form-control valorTotal" value="${valorTotal.toFixed(2)}" onchange="atualizarTodosOsCalculos1('${ambiente}')"></td>
                                 <td><textarea class="form-control" rows="3" cols="30">${produto.observacao || ''}</textarea></td>
                                 <td>
                                     <i class="fa fa-question-circle" style="cursor: pointer; color: blue; margin-right: 10px;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
@@ -683,15 +811,18 @@ function atualizarTodosOsCalculos(ambiente) {
         const valorTotalElement = row.querySelector('.valorTotal');
 
         if (valorUnitarioElement && quantidadeElement && valorTotalElement) {
+            // Verificar se o valor unitário foi editado
             let valorUnitario = parseFloat(valorUnitarioElement.textContent.replace(/[^\d,.-]/g, '').replace(',', '.'));
+            
+            // Caso o valor total tenha sido editado, priorizá-lo
+            let valorTotal = parseFloat(valorTotalElement.value.replace(/[^\d,.-]/g, '').replace(',', '.'));
             let quantidade = parseFloat(quantidadeElement.value);
 
-            // Se o valor total foi editado, priorizamos ele
-            let valorTotal = parseFloat(valorTotalElement.value.replace(/[^\d,.-]/g, '').replace(',', '.'));
-
+            // Verificar se o valor total é válido e se o valor unitário também é
             if (!isNaN(valorUnitario) && !isNaN(quantidade)) {
-                // Se o campo de valor total não foi editado, calcule com base no valor unitário e quantidade
+                // Se o campo de valor total foi editado, usá-lo
                 if (isNaN(valorTotal)) {
+                    // Caso o valor total não tenha sido editado, calcular com base no valor unitário e quantidade
                     valorTotal = valorUnitario * quantidade;
                     valorTotalElement.value = valorTotal.toFixed(2).replace('.', ',');
                 }
@@ -754,7 +885,7 @@ function incluirProdutoGenerico() {
     <td>101020</td>
     <td>101020</td>
    <td style="white-space: nowrap;"><span class="valorUnitario">${valorUnitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
-    <td><input type="number" class="form-control quantidadeProduto" min="1" value="${quantidade}" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
+    <td><input type="number" class="form-control quantidadeProduto" min="1" value="${quantidade}" onchange="atualizarTodosOsCalculos1('${ambienteSelecionado}')"></td>
     <td style="white-space: nowrap;"><span class="valorTotal">${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
     <th>Obs</th>
     <td>
@@ -933,7 +1064,7 @@ function adicionarAoOrcamento(nomeProduto, codigoProduto, valorProduto, imagemUr
         <td>${codigoProduto || 'N/A'}</td>
         <td>${codigoInterno || 'N/A'}</td>
         <td style="white-space: nowrap;">R$ <span class="valorUnitario">${valorProduto.toFixed(2)}</span></td>
-        <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
+        <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos1('${ambienteSelecionado}')"></td>
         <td style="white-space: nowrap;">R$ <span class="valorTotal">${valorProduto.toFixed(2)}</span></td>
         <td><button class="btn btn-sm btn-danger" onclick="removerProduto(this, '${ambienteSelecionado}')">Remover</button></td>
     `;
@@ -1116,7 +1247,7 @@ function adicionarProdutoGenerico() {
     <td>101020</td>
     <td>101020</td>
     <td style="white-space: nowrap;"><span class="valorUnitario">${valorUnitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
-    <td><input type="number" class="form-control quantidadeProduto" min="1" value="${quantidade}" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
+    <td><input type="number" class="form-control quantidadeProduto" min="1" value="${quantidade}" onchange="atualizarTodosOsCalculos1('${ambienteSelecionado}')"></td>
     <td style="white-space: nowrap;"><span class="valorTotal">${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
     <th>Obs</th>
     <td>
@@ -1627,9 +1758,9 @@ function incluirProdutosSelecionados() {
         <td>${codigoProduto}</td>
         <td>${codigoInterno}</td>
         <td style="white-space: nowrap;"><span class="valorUnitario">${valorUnitarioValido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
-        <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
+        <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos1('${ambienteSelecionado}')"></td>
       <td style="white-space: nowrap;">
-    <input type="number" class="form-control valorTotal" value="${valorUnitarioValido.toFixed(2)}" style="width: 120px;" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')">
+    <input type="number" class="form-control valorTotal" value="${valorUnitarioValido.toFixed(2)}" style="width: 120px;" onchange="atualizarTodosOsCalculos1('${ambienteSelecionado}')">
 </td>
   <td>
             <i class="fa fa-question-circle" style="cursor: pointer; color: blue; margin-right: 10px;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
