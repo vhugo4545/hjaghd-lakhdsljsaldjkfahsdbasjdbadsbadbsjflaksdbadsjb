@@ -1159,29 +1159,33 @@ async function gerarFolhaOrcamento() {
                 const codigoInterno = row.querySelector('td:nth-child(5)').textContent;
                 const valorUnitarioText = row.querySelector('td:nth-child(6)').textContent.replace('R$', '').trim();
                 const valorUnitario = parseFloat(valorUnitarioText.replace('.', '').replace(',', '.'));
-            
+        
                 // Verifique se o valor unitário é um número válido
                 const valorUnitarioValido = !isNaN(valorUnitario) ? valorUnitario : 0;
-            
+        
                 const imagemUrl = row.querySelector('img') ? row.querySelector('img').src : '';
-            
+        
                 const newRow = document.createElement('tr');
                 newRow.innerHTML = `
-                    <td>${imagemUrl ? `<img src="${imagemUrl}" alt="Imagem do Produto Selecionado" style="max-width: 50px;">` : '<span>Sem imagem</span>'}</td>
-                    <td>${nomeProduto}</td>
-                    <td>${codigoProduto}</td>
-                    <td>${codigoInterno}</td>
-                    <td><span class="valorUnitario">${valorUnitarioValido}</span></td>
-                    <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos('${ambienteSelecionado}')"></td>
-                    <td><span class="valorTotal">${valorUnitarioValido}</span></td>
-                    <td>
-                        <i class="fa fa-question-circle" style="cursor: pointer; color: blue; margin-right: 10px;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
-                        <i class="fa fa-times" style="cursor: pointer; color: red;" onclick="removerProduto(this, '${ambienteSelecionado}')" title="Remover Produto"></i>
-                    </td>
-                `;
+                <td><input type="checkbox" class="checkbox-selecionar-produto"></td>
+                <td>${imagemUrl ? `<img src="${imagemUrl}" alt="Imagem do Produto Selecionado" style="max-width: 50px;">` : '<span>Sem imagem</span>'}</td>
+                <td>${nomeProduto}</td>
+                <td>${codigoProduto}</td>
+                <td>${codigoInterno}</td>
+                <td style="white-space: nowrap;"><span class="valorUnitario">${valorUnitarioValido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>
+                <td><input type="number" class="form-control quantidadeProduto" min="1" value="1" onchange="atualizarTodosOsCalculos1('${ambienteSelecionado}')"></td>
+              <td style="white-space: nowrap;">
+            <input type="number" class="form-control valorTotal" value="${valorUnitarioValido.toFixed(2)}" style="width: 120px;" onchange="atualizarTodosOsCalculos1('${ambienteSelecionado}')">
+        </td>
+          <td>
+                    <i class="fa fa-question-circle" style="cursor: pointer; color: blue; margin-right: 10px;" onclick="adicionarObservacao(this)" title="Adicionar Observação"></i>
+                    <i class="fa fa-times" style="cursor: pointer; color: red;" onclick="removerProduto(this, '${ambienteSelecionado}')" title="Remover Produto"></i>
+                </td>
+            `;
+            
                 tabelaAmbiente.querySelector('tbody').appendChild(newRow);
             });
-            
+        
             // Reaplicar o sortable para garantir que todos os produtos sejam arrastáveis
             $(`#tabela-${ambienteSelecionado} tbody`).sortable({
                 placeholder: "ui-state-highlight",
