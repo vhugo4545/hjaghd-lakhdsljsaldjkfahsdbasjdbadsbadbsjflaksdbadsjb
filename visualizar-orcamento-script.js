@@ -484,6 +484,7 @@ function preencherFormularioComDadosPedido(pedido) {
                              <td><input type="checkbox" class="checkbox-selecionar-produto"></td>
                                 <td>${produto.imagemUrl ? `<img src="${produto.imagemUrl}" alt="Imagem do Produto Selecionado" style="max-width: 50px;">` : '<span>Sem imagem</span>'}</td>
                                 <td>${produto.nomeProduto}</td>
+                                <td>${produto.codigoProduto}</td>
                                 <td>${produto.codigoInterno}</td>
                                 <td style="white-space: nowrap;"><span class="valorUnitario">&nbsp;${produto.valorUnitario}</span></td>
                                 <td><input type="number" class="form-control quantidadeProduto" min="1" value="${produto.quantidade}" onchange="atualizarTodosOsCalculos1('${ambiente}')"></td>
