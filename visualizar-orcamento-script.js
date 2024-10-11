@@ -33,21 +33,25 @@ function atualizarTodosOsCalculos1(tabelaId) {
 }
 
 async function gerarEEnviarProposta() {
-    // Verificar se existe algum valor igual a 0 na tabela
-    const temValorZero = [...document.querySelectorAll('#tabelasAmbientes .valorUnitario, #tabelasAmbientes .valorTotal')].some(cell => {
-        const valor = parseFloat(cell.innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+    const temValorZero = [...document.querySelectorAll('.valorTotal')].some(cell => {
+        // Tentar pegar o valor diretamente do campo de input caso ele exista, senão pegar o valor do texto
+        const valor = parseFloat(cell.value ? cell.value.replace(/[^\d,.-]/g, '').replace(',', '.') : cell.innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+    
+        // Verificar se o valor é 0 ou NaN (valor não numérico)
         return valor === 0 || isNaN(valor);
     });
+    
+    if (temValorZero) {
+        alert('Existem produtos com valor 0,00 na tabela. Verifique antes de enviar.');
+        return;
+    }
+    
 
-
-
-    // Obter valores do formulário
-    alert('Processamento do pedido no financeiro foi enviado!');
     const codigoCliente = document.getElementById('idClienteOmie').value.trim();
-    const dataPrevisao = new Date().toLocaleDateString('pt-BR'); // Data atual no formato dd/mm/yyyy
-    const numeroPedido = '93168'; // Você pode obter isso dinamicamente, se necessário
+    const dataPrevisao = new Date().toLocaleDateString('pt-BR');
+    const numeroPedido = '93168'; // Número do pedido fixo, modificar conforme necessário
 
-    // Gerar um código aleatório usando a hora e segundos atuais e letras
+    // Função para gerar um código aleatório único
     function gerarCodigoAleatorio() {
         const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
         const numeros = Date.now().toString();
@@ -58,12 +62,10 @@ async function gerarEEnviarProposta() {
         return numeros + resultado;
     }
 
-    // Obter todos os produtos da tabela
     const produtos = [];
     document.querySelectorAll("#tabelasAmbientes .ambiente-container tbody tr").forEach((row) => {
         const nomeProduto = row.querySelector("td:nth-child(3)").innerText.trim();
-        const codigoProduto = row.querySelector("td:nth-child(4)").innerText.trim();
-        const codigoInterno = row.querySelector("td:nth-child(4)").innerText.trim();
+        const codigoProduto = row.querySelector("td:nth-child(5)").innerText.trim();
         const valorUnitario = parseFloat(row.querySelector("td:nth-child(6) .valorUnitario").innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
         const quantidade = parseInt(row.querySelector("td:nth-child(7) .quantidadeProduto").value);
         const valorTotal = parseFloat(row.querySelector("td:nth-child(8) .valorTotal").value);
@@ -80,7 +82,7 @@ async function gerarEEnviarProposta() {
                 },
                 produto: {
                     cfop: "5.102",
-                    codigo_produto: codigoInterno,
+                    codigo_produto: codigoProduto,
                     descricao: nomeProduto,
                     ncm: "9403.30.00",
                     quantidade: quantidade,
@@ -88,13 +90,11 @@ async function gerarEEnviarProposta() {
                     unidade: "UN",
                     valor_desconto: 0,
                     valor_unitario: valorUnitario
-                },
-              
+                }
             });
         }
     });
 
-    // Construir o objeto da proposta
     const proposta = {
         cabecalho: {
             codigo_cliente: codigoCliente,
@@ -127,9 +127,7 @@ async function gerarEEnviarProposta() {
         }
     };
 
-    // Enviar a estrutura gerada para a API
     try {
-        console.log(proposta);
         const response = await fetch('https://acropoluz-one-cdc9c4e154cc.herokuapp.com/omie/incluir-pedido', {
             method: 'POST',
             headers: {
@@ -143,14 +141,11 @@ async function gerarEEnviarProposta() {
         }
 
         const responseData = await response.json();
-        console.log('Proposta enviada com sucesso:', responseData);
-        alert('Seu pedido foi enviado para o financeiro com sucesso!');
-
-        // Chamar a função para atualizar a proposta
-        await atualizarProposta();
+        alert('Pedido enviado para o financeiro com sucesso!');
+        await atualizarProposta(); // Chamar a função de atualização
     } catch (error) {
         console.error('Erro ao enviar a proposta:', error);
-        alert('Aconteceu algo de errado!');
+        alert('Ocorreu um erro ao enviar o pedido.');
     }
 }
 
