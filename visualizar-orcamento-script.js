@@ -62,6 +62,7 @@ async function gerarEEnviarProposta() {
         return numeros + resultado;
     }
 
+    
     const produtos = [];
     document.querySelectorAll("#tabelasAmbientes .ambiente-container tbody tr").forEach((row) => {
         const nomeProduto = row.querySelector("td:nth-child(3)").innerText.trim();
