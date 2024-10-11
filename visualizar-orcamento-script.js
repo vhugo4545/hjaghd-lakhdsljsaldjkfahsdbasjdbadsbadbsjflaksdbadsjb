@@ -460,7 +460,7 @@ function preencherFormularioComDadosPedido(pedido) {
                         <th><input type="checkbox" onclick="selecionarTodosProdutos(this, 'tabela-${ambiente}')"></th>
                         <th>Imagem</th>
                         <th>Nome</th>
-                        <th>Código</th>
+                        <th>Código 1</th>
                         <th>Código Interno</th>
                         <th>Valor Unitário</th>
                         <th>QT</th>
