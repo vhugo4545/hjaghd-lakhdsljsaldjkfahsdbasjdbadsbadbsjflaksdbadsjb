@@ -2146,12 +2146,6 @@ function salvarProposta() {
 }
 
 function gerarPaginaOrcamento() {
-    // Verificar se existe algum valor igual a 0,00 na tabela
-    const temValorZero = [...document.querySelectorAll('.valorUnitario, .valorTotal')].some(cell => {
-        const valor = parseFloat(cell.innerText.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
-        return valor === 0 || isNaN(valor);
-    });
-
     // Obter as informações do cliente e do pedido
     const nomeCliente = document.getElementById('nome').value;
     const cpfCnpj = document.getElementById('cpfCnpj').value;
@@ -2159,40 +2153,42 @@ function gerarPaginaOrcamento() {
     const numeroComplemento = document.getElementById('numeroComplemento').value;
     const telefone = document.getElementById('telefone').value;
     const tipoEntrega = document.getElementById('tipoEntrega').value;
-    const valorFrete = document.getElementById('valorFrete').value;
+    const valorFrete = parseFloat(document.getElementById('valorFrete').value.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.')) || 0;
     const vendedor = document.getElementById('selectVendedor').value;
     const agenteArquiteto = document.getElementById('agenteArquiteto').value;
     const dataEntrega = document.getElementById('dataEntrega').value;
     const tipoPagamento = document.getElementById('tipoPagamento').value;
-    const desconto = parseFloat(document.getElementById('desconto').value);
+    const desconto = parseFloat(document.getElementById('desconto').value) || 0;
 
     // Obter as tabelas de produtos separados por ambiente e os totalizadores
     const ambientes = document.querySelectorAll('.ambiente-container');
     let tabelasAmbientesHtml = '';
+    let totalGeral = 0;
 
     ambientes.forEach(ambiente => {
         const ambienteNome = ambiente.querySelector('h4').innerText.replace('Excluir Ambiente', '').trim();
         const linhasTabela = ambiente.querySelectorAll('tbody tr');
         let linhasTabelaHtml = '';
+        let totalAmbiente = 0;
 
         linhasTabela.forEach(row => {
             let nomeProduto = row.querySelector('td:nth-child(3)').innerText.trim();
             const codigoInterno = row.querySelector('td:nth-child(4)').innerText.trim();
-            const valorUnitario = row.querySelector('.valorUnitario').innerText.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
-            const quantidade = row.querySelector('.quantidadeProduto').value;
-            const valorTotal = row.querySelector('.valorTotal').value.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
-            const observacao = row.querySelector('textarea') ? row.querySelector('textarea').value.trim() : '';
+            const valorUnitario = parseFloat(row.querySelector('.valorUnitario').innerText.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.')) || 0;
+            const quantidade = parseFloat(row.querySelector('.quantidadeProduto').value) || 1;
+            const valorTotal = valorUnitario * quantidade;
 
-            // Filtrar o nome do produto: remover "**" e limitar aos 10 primeiros caracteres
-            nomeProduto = nomeProduto.replace(/\*\*/g, '').substring(0, 10);
+            totalAmbiente += valorTotal;
+
+            const observacao = row.querySelector('textarea') ? row.querySelector('textarea').value.trim() : '';
 
             linhasTabelaHtml += `
                 <tr>
                     <td>${nomeProduto}</td>
                     <td>${codigoInterno}</td>
-                    <td>${parseFloat(valorUnitario).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>${valorUnitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     <td>${quantidade}</td>
-                    <td>${parseFloat(valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     <td>${observacao}</td>
                 </tr>
             `;
@@ -2216,14 +2212,15 @@ function gerarPaginaOrcamento() {
                         ${linhasTabelaHtml}
                     </tbody>
                 </table>
-                ${ambiente.querySelector('.total-ambiente-bar').outerHTML}
+                <div class="total-ambiente-bar">Total do Ambiente: R$ ${totalAmbiente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
                 <br>
             </div>
         `;
+
+        totalGeral += totalAmbiente;
     });
 
-    // Calcular total geral e aplicar desconto
-    const totalGeral = parseFloat(document.getElementById('total-geral').innerText.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
+    // Aplicar o desconto
     const totalComDesconto = desconto > 0 ? totalGeral * (1 - desconto / 100) : totalGeral;
 
     // Criar a estrutura HTML da nova página de orçamento
@@ -2304,7 +2301,7 @@ function gerarPaginaOrcamento() {
                         <p><strong>Endereço:</strong> ${endereco}, ${numeroComplemento}</p>
                         <p><strong>Telefone:</strong> ${telefone}</p>
                         <p><strong>Tipo de Entrega:</strong> ${tipoEntrega}</p>
-                        <p><strong>Valor do Frete:</strong> ${valorFrete ? parseFloat(valorFrete).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não definido'}</p>
+                        <p><strong>Valor do Frete:</strong> ${valorFrete.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                     </div>
                     <div class="col-md-6">
                         <h3>Informações do Pedido</h3>
@@ -2317,8 +2314,8 @@ function gerarPaginaOrcamento() {
                 <hr>
                 <!-- Tabelas dos Ambientes -->
                 ${tabelasAmbientesHtml}
-                <div class="total-geral-bar mt-4">Total Geral: R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
-                ${desconto > 0 ? `<div class="total-geral-bar mt-4">Total com Desconto Aplicado: R$ ${totalComDesconto.toFixed(2).replace('.', ',')}</div>` : ''}
+                <div class="total-geral-bar mt-4">Total Geral: R$ ${totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                ${desconto > 0 ? `<div class="total-geral-bar mt-4">Total com Desconto Aplicado: R$ ${totalComDesconto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>` : ''}
             </div>
         </body>
         </html>
@@ -2330,10 +2327,8 @@ function gerarPaginaOrcamento() {
     novaJanela.document.close();
 
     // Configurar para impressão com margens mínimas e escala personalizada
-    novaJanela.onload = function () {
-        novaJanela.print();
-    };
-}
+    novaJanela.onload
+
 
 
 
