@@ -2145,15 +2145,12 @@ function salvarProposta() {
     // Coloque aqui o restante do código para salvar a proposta
 }
 
-
 function gerarPaginaOrcamento() {
     // Verificar se existe algum valor igual a 0,00 na tabela
     const temValorZero = [...document.querySelectorAll('.valorUnitario, .valorTotal')].some(cell => {
-        const valor = parseFloat(cell.innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        const valor = parseFloat(cell.innerText.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
         return valor === 0 || isNaN(valor);
     });
-
- 
 
     // Obter as informações do cliente e do pedido
     const nomeCliente = document.getElementById('nome').value;
@@ -2181,9 +2178,9 @@ function gerarPaginaOrcamento() {
         linhasTabela.forEach(row => {
             let nomeProduto = row.querySelector('td:nth-child(3)').innerText.trim();
             const codigoInterno = row.querySelector('td:nth-child(4)').innerText.trim();
-            const valorUnitario = row.querySelector('.valorUnitario').innerText.replace(/[^\d,.-]/g, '').replace(',', '.');
+            const valorUnitario = row.querySelector('.valorUnitario').innerText.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
             const quantidade = row.querySelector('.quantidadeProduto').value;
-            const valorTotal = row.querySelector('.valorTotal').value;
+            const valorTotal = row.querySelector('.valorTotal').value.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
             const observacao = row.querySelector('textarea') ? row.querySelector('textarea').value.trim() : '';
 
             // Filtrar o nome do produto: remover "**" e limitar aos 10 primeiros caracteres
@@ -2226,7 +2223,7 @@ function gerarPaginaOrcamento() {
     });
 
     // Calcular total geral e aplicar desconto
-    const totalGeral = parseFloat(document.getElementById('total-geral').innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+    const totalGeral = parseFloat(document.getElementById('total-geral').innerText.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
     const totalComDesconto = desconto > 0 ? totalGeral * (1 - desconto / 100) : totalGeral;
 
     // Criar a estrutura HTML da nova página de orçamento
@@ -2337,6 +2334,7 @@ function gerarPaginaOrcamento() {
         novaJanela.print();
     };
 }
+
 
 
 function gerarPaginaOrcamentoSemValores() {
