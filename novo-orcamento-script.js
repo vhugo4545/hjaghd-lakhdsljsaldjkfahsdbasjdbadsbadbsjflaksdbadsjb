@@ -680,96 +680,72 @@ function adicionarProdutoGenerico() {
 
 
 // Função para salvar a proposta
-async function salvarProposta() {
+async function atualizarProposta() {
+    // Obter o ID do pedido da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idPedido = urlParams.get('id');
+
+    if (!idPedido) {
+        console.error("ID do pedido não encontrado na URL.");
+        return;
+    }
+
     try {
         // Remover a parte "Excluir Ambiente" dos títulos
         document.querySelectorAll("#tabelasAmbientes .ambiente-container h4").forEach(header => {
             header.innerText = header.innerText.replace("Excluir Ambiente", "").trim();
         });
 
-        // Selecionar os campos do formulário e garantir que campos vazios sejam preenchidos
-        const nome = document.getElementById('nome').value.trim() || "Nome não informado";
-        const cpfCnpj = document.getElementById('cpfCnpj').value.trim() || "";
-        const endereco = document.getElementById('endereco').value.trim() || "";
-        const numeroComplemento = document.getElementById('numeroComplemento').value.trim() || "";
-        const telefone = document.getElementById('telefone').value.trim() || "Telefone não informado";
-        const vendedor = document.getElementById('selectVendedor').value.trim() || "Vendedor não informado";
-        const agenteArquiteto = document.getElementById('agenteArquiteto').value.trim() || "";
-        const tipoEntrega = document.getElementById('tipoEntrega').value.trim() || "cliente"; // Cliente como padrão
+        // Coletar dados do cliente
+        const nome = document.getElementById('nome').value.trim();
+        const cpfCnpj = document.getElementById('cpfCnpj').value.trim();
+        const endereco = document.getElementById('endereco').value.trim();
+        const numeroComplemento = document.getElementById('numeroComplemento').value.trim();
+        const telefone = document.getElementById('telefone').value.trim();
+
+        // Coletar informações do orçamento
+        const vendedor = document.getElementById('selectVendedor').value.trim();
+        const agenteArquiteto = document.getElementById('agenteArquiteto').value.trim();
+        const tipoEntrega = document.getElementById('tipoEntrega').value.trim();
         const valorFrete = parseFloat(document.getElementById('valorFrete').value.trim()) || 0;
-        const tipoPagamento = document.getElementById('tipoPagamento').value.trim() || "pix"; // Pix como padrão
+        const tipoPagamento = document.getElementById('tipoPagamento').value.trim();
         const desconto = parseFloat(document.getElementById('desconto').value.trim()) || 0;
-        const dataEntrega = document.getElementById('dataEntrega').value || null;
+        const dataEntrega = document.getElementById('dataEntrega').value;
 
-        // Validações básicas para garantir que os campos obrigatórios estão preenchidos
-        if (!nome || !telefone || !vendedor) {
-            alert("Por favor, preencha todos os campos obrigatórios: Nome, Telefone e Vendedor.");
-            return;
-        }
-
-        // Pega todos os produtos e ambientes
+        // Obter todos os produtos e ambientes
         const produtos = [];
         document.querySelectorAll("#tabelasAmbientes .ambiente-container").forEach(container => {
-            const ambiente = container.querySelector("h4").innerText.trim(); // Título sem "Excluir Ambiente"
+            const ambiente = container.querySelector("h4").innerText.trim();
             container.querySelectorAll("tbody tr").forEach((row) => {
-                // Verificar se todos os elementos são encontrados
-                const nomeProdutoElement = row.querySelector("td:nth-child(3)");
-                const codigoProdutoElement = row.querySelector("td:nth-child(4)");
-                const codigoInternoElement = row.querySelector("td:nth-child(5)");
-                const valorUnitarioElement = row.querySelector(".valorUnitario");
-                const quantidadeElement = row.querySelector(".quantidadeProduto");
-                const valorTotalElement = row.querySelector(".valorTotal");
+                const nomeProduto = row.querySelector("td:nth-child(3)")?.innerText.trim() || '';
+                const codigoProduto = row.querySelector("td:nth-child(4)")?.innerText.trim() || '';
+                const codigoInterno = row.querySelector("td:nth-child(5)")?.innerText.trim() || '';
+                const valorUnitario = parseFloat(row.querySelector(".valorUnitario")?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.') || 0);
+                const quantidade = parseFloat(row.querySelector(".quantidadeProduto")?.value || 0);
+                const valorTotal = parseFloat(row.querySelector(".valorTotal")?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.') || 0);
+                let observacao = '';
 
-                if (
-                    nomeProdutoElement &&
-                    codigoProdutoElement &&
-                    codigoInternoElement &&
-                    valorUnitarioElement &&
-                    quantidadeElement &&
-                    valorTotalElement
-                ) {
-                    // Extrair e converter valores
-                    const nomeProduto = nomeProdutoElement.innerText.trim();
-                    const codigoProduto = codigoProdutoElement.innerText.trim();
-                    const codigoInterno = codigoInternoElement.innerText.trim();
-                    const valorUnitario = parseFloat(valorUnitarioElement.innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
-                    const quantidade = parseFloat(quantidadeElement.value);
-                    const valorTotal = parseFloat(valorTotalElement.innerText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+                // Verificar observação
+                const nextRow = row.nextElementSibling;
+                if (nextRow && nextRow.classList.contains('observacao-row')) {
+                    observacao = nextRow.querySelector('textarea')?.value.trim() || '';
+                }
 
-                    // Pegar a observação, se houver
-                    const obsRow = row.nextElementSibling;
-                    let observacao = '';
-                    if (obsRow && obsRow.classList.contains('observacao-row')) {
-                        const obsTextArea = obsRow.querySelector('textarea');
-                        if (obsTextArea) {
-                            observacao = obsTextArea.value.trim();
-                        }
-                    }
-
-                    // Validar se os valores são válidos antes de adicionar ao array
-                    if (!isNaN(valorUnitario) && !isNaN(quantidade) && !isNaN(valorTotal)) {
-                        // Adiciona ao array de produtos
-                        produtos.push({
-                            nomeProduto,
-                            codigoProduto,
-                            codigoInterno,
-                            valorUnitario,
-                            quantidade,
-                            valorTotal,
-                            ambiente,
-                            statusSeparacao: 'Pendente', // Status padrão para produtos
-                            observacao,
-                        });
-                    }
+                if (nomeProduto && !isNaN(valorUnitario) && !isNaN(quantidade) && !isNaN(valorTotal)) {
+                    produtos.push({
+                        nomeProduto,
+                        codigoProduto,
+                        codigoInterno,
+                        valorUnitario,
+                        quantidade,
+                        valorTotal,
+                        observacao,
+                        ambiente,
+                        statusSeparacao: 'Aberto'
+                    });
                 }
             });
         });
-
-        // Verificar se há produtos para serem enviados
-        if (produtos.length === 0) {
-            alert("Nenhum produto foi adicionado ao pedido.");
-            return;
-        }
 
         // Construir o objeto do pedido
         const pedido = {
@@ -791,38 +767,35 @@ async function salvarProposta() {
                 dataEntrega,
             },
             produtos,
-            codigoClienteOmie: document.getElementById('idClienteOmie').value.trim() || "",
+            codigoClienteOmie: document.getElementById('idClienteOmie').value.trim(),
             status: 'Aberto',
         };
 
         console.log('Enviando pedido para salvar:', JSON.stringify(pedido, null, 2)); // Log detalhado para ver o pedido sendo enviado
 
-        // Certifique-se de que a URL corresponde ao servidor backend que está rodando sua API
-        const response = await fetch('https://acropoluz-one-cdc9c4e154cc.herokuapp.com/pedido/criar', {
-            method: 'POST',
+        // Fazer a requisição de atualização do pedido
+        const response = await fetch(`https://acropoluz-one-cdc9c4e154cc.herokuapp.com/pedido/${idPedido}`, {
+            method: 'PUT',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(pedido),
+            body: JSON.stringify(pedido)
         });
 
         // Analisar a resposta
         if (response.ok) {
-            const jsonData = await response.json();
-            alert('Proposta salva com sucesso!');
-            console.log('Pedido salvo:', jsonData);
+            alert('Proposta atualizada com sucesso!');
+            window.location.reload();
         } else {
             const errorData = await response.json();
-            console.error('Erro ao salvar a proposta:', errorData);
-            alert(`Erro ao salvar a proposta: ${errorData.message}`);
+            console.error('Erro ao atualizar a proposta:', errorData);
+            alert(`Erro ao atualizar a proposta: ${errorData.message}`);
         }
     } catch (error) {
-        // Tratar erros de rede ou outros
         console.error('Erro ao fazer a requisição:', error);
         alert('Erro ao se conectar ao servidor. Tente novamente mais tarde.');
     }
 }
-
 
 
 
