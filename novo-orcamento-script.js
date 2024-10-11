@@ -713,9 +713,9 @@ async function salvarProposta() {
             const ambiente = container.querySelector("h4").innerText.trim(); // Título sem "Excluir Ambiente"
             container.querySelectorAll("tbody tr").forEach((row) => {
                 // Verificar se todos os elementos são encontrados
-                const nomeProdutoElement = row.querySelector("td:nth-child(3)");
-                const codigoProdutoElement = row.querySelector("td:nth-child(4)");
-                const codigoInternoElement = row.querySelector("td:nth-child(5)");
+                const nomeProdutoElement = row.querySelector("td:nth-child(2)");
+                const codigoProdutoElement = row.querySelector("td:nth-child(3)");
+                const codigoInternoElement = row.querySelector("td:nth-child(4)");
                 const valorUnitarioElement = row.querySelector(".valorUnitario");
                 const quantidadeElement = row.querySelector(".quantidadeProduto");
                 const valorTotalElement = row.querySelector(".valorTotal");
