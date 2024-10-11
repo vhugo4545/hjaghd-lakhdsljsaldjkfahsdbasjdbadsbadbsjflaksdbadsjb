@@ -303,7 +303,12 @@ function gerarCodigoClienteIntegracao() {
     // Gera duas letras aleatórias
     const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const letra1 = letras.charAt(Math.floor(Math.random() * letras.length));
-    const letra2 = letras.charAt(Math.floor(Math.random() * letras.length));
+    const letra2 = letras.charAt(Math.floor(Math.random() * 
+                                            
+                                            
+                                            
+                                            
+                                            letras.length));
 
     return `Codigo${letra1}${letra2}${horas}${minutos}${segundos}`;
 }
@@ -480,7 +485,6 @@ function preencherFormularioComDadosPedido(pedido) {
                                 <td>${produto.imagemUrl ? `<img src="${produto.imagemUrl}" alt="Imagem do Produto Selecionado" style="max-width: 50px;">` : '<span>Sem imagem</span>'}</td>
                                 <td>${produto.nomeProduto}</td>
                                 <td>${produto.codigoProduto}</td>
- <td>${produto.codigoProduto}</td>
                                 <td>${produto.codigoInterno}</td>
                                 <td style="white-space: nowrap;"><span class="valorUnitario">&nbsp;${produto.valorUnitario}</span></td>
                                 <td><input type="number" class="form-control quantidadeProduto" min="1" value="${produto.quantidade}" onchange="atualizarTodosOsCalculos1('${ambiente}')"></td>
