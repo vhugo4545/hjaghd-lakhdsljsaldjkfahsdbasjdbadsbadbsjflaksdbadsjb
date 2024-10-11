@@ -466,7 +466,7 @@ function preencherFormularioComDadosPedido(pedido) {
                         <th>Imagem</th>
                         <th>Nome</th>
                         <th>Código</th>
-                        <th>Código Interno</th>
+                        <th>Código Interno 1</th>
                         <th>Valor Unitário</th>
                         <th>QT</th>
                         <th>Valor Total</th>
